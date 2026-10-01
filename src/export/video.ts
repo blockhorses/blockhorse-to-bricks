@@ -5,6 +5,7 @@ import type { PunkGrid } from '../core/detect';
 import { easeIO } from '../viewer/timeline';
 import { SKY, Viewer } from '../viewer/scene';
 import { drawPages, PAGE_SIZE } from './pdf';
+import { Book } from './book';
 import { makeSoundtrack } from './sound';
 
 export type VideoFormat = 'square' | 'story';
@@ -19,26 +20,36 @@ export function videoMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
 
 export interface VideoOptions { format: VideoFormat; label: string; small?: boolean; onProgress?: (stage: 'pages' | 'recording', f: number) => void }
 
-/** The booklet in the video: a few pages read slowly, then a quick riffle that ends on the finished model. */
-const SLOW = 1.2, FAST = 0.13, HOLD = 1.4;
+/** The booklet in the video: a 3D book whose pages turn slowly on a few pages, then riffle and land on the
+ *  finished model. Right-hand pages (shown after each turn) and the backs of the leaves, in order. */
+const SLOW = 1.2, FLIP = 0.6, HOLD = 1.6;
 function bookPlan(steps: number) {
-  const last = steps + 2, pick = (f: number) => 2 + Math.round(f * (steps - 1));
-  // cover, a step at the start, the middle and the end, then the finished model page
-  const slow = [...new Set([1, pick(0.08), pick(0.5), pick(0.85), last])];
-  const fast: number[] = [];
-  for (let i = 0; i < 10; i++) fast.push(2 + Math.round((i * (steps - 1)) / 10));
-  fast.push(last);
-  return { slow, fast, length: slow.length * SLOW + fast.length * FAST + HOLD };
+  const finished = steps + 2, pick = (f: number) => 2 + Math.round(f * (steps - 1));
+  // pages that land on the right: cover, a step at the start, the middle and the end, a riffle, the finished model
+  const right = [1, pick(0.08), pick(0.5), pick(0.85)];
+  const nSlow = right.length;
+  for (let i = 1; i <= 9; i++) right.push(pick(0.85 + (0.15 * i) / 10));   // riffle on to the last steps
+  right.push(finished);
+  const order: number[] = [];
+  right.forEach((n, i) => { if (i) order.push(Math.max(2, Math.min(steps + 1, n - 1))); order.push(n); });
+  const turns: [number, number][] = [];
+  let at = 0.4 + SLOW;
+  for (let j = 1; j < right.length; j++) {
+    const fast = j >= nSlow, d = fast ? Math.max(0.22, 0.45 * Math.pow(0.85, j - nSlow)) : FLIP;
+    turns.push([at, d]);
+    at += fast ? Math.max(0.12, 0.3 * Math.pow(0.82, j - nSlow)) : SLOW;
+  }
+  return { order, turns, length: turns[turns.length - 1][0] + turns[turns.length - 1][1] + HOLD };
 }
 
-async function bookPages(m: Model, grid: PunkGrid, label: string, width: number, want: Set<number>, onProgress: (f: number) => void): Promise<Map<number, HTMLCanvasElement>> {
-  const out = new Map<number, HTMLCanvasElement>();
+async function bookPages(m: Model, grid: PunkGrid, label: string, width: number, order: number[], onProgress: (f: number) => void): Promise<HTMLCanvasElement[]> {
+  const got = new Map<number, HTMLCanvasElement>(), want = new Set(order);
   await drawPages(m, grid, { label, renderSize: width < 900 ? 700 : 1000 }, (pg, n) => {
     const c = document.createElement('canvas'); c.width = width; c.height = Math.round((width * PAGE_SIZE[1]) / PAGE_SIZE[0]);
     c.getContext('2d')!.drawImage(pg, 0, 0, c.width, c.height);
-    out.set(n, c); onProgress(out.size / want.size);
+    got.set(n, c); onProgress(got.size / want.size);
   }, n => want.has(n));
-  return out;
+  return order.map(n => got.get(n)!);
 }
 
 export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Promise<{ blob: Blob; ext: string }> {
@@ -52,14 +63,9 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
   v.setModel(m);
   const tl = v.tl!;
   const plan = bookPlan(m.steps.length);
-  const pages = await bookPages(m, grid, o.label, o.small ? 720 : 1080, new Set([...plan.slow, ...plan.fast]), f => o.onProgress?.('pages', f));
-  // page turns: [start, duration] after the model, for the page sounds
-  const turns: [number, number, number][] = [];   // start, length, page
-  let at = 0.6;
-  for (const n of plan.slow) { turns.push([at, SLOW, n]); at += SLOW; }
-  for (const n of plan.fast) { turns.push([at, FAST, n]); at += FAST; }
-  turns[turns.length - 1][1] += HOLD;
-  const tBook = tl.end, duration = tBook + at + HOLD;
+  const pages = await bookPages(m, grid, o.label, o.small ? 1100 : 1600, plan.order, f => o.onProgress?.('pages', f));
+  const book = new Book(pages, PAGE_SIZE[1] / PAGE_SIZE[0], W / H, plan.turns);
+  const tBook = tl.end, duration = tBook + plan.length;
   const out = document.createElement('canvas'); out.width = W; out.height = H;
   const x = out.getContext('2d')!;
   const title = o.label ? `Punk ${o.label}` : 'My CryptoPunk';
@@ -69,31 +75,14 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
     v.pose(Math.min(t, tl.end)); v.setBuildCamera(Math.min(t, tl.end)); v.render();
     x.drawImage(glCanvas, 0, 0, W, H);
   };
-  // a page fills 88 % of the width, centred under the titles, with a soft shadow
-  const PWv = Math.round(W * 0.88), PHv = Math.round((PWv * PAGE_SIZE[1]) / PAGE_SIZE[0]);
-  const PX = (W - PWv) / 2, PY = o.format === 'story' ? (H - PHv) / 2 : Math.max(140 * k, (H - PHv) / 2 + 30 * k);
-  const pageAt = (tb: number) => { let cur = turns[0]; for (const tr of turns) if (tb >= tr[0]) cur = tr; return cur; };
-  const drawPage = (n: number, alpha = 1) => {
-    const pg = pages.get(n); if (!pg) return;
-    x.save(); x.globalAlpha = alpha; x.shadowColor = 'rgba(20,40,60,.28)'; x.shadowBlur = 30 * k; x.shadowOffsetY = 10 * k;
-    x.drawImage(pg, PX, PY, PWv, PHv); x.restore();
-  };
-  const drawBook = (tb: number) => {
-    const cur = pageAt(tb), i = turns.indexOf(cur), prev = turns[i - 1];
-    // slow pages fade in, the riffle cuts
-    const fade = cur[1] >= SLOW && prev ? Math.min(1, (tb - cur[0]) / 0.25) : 1;
-    if (fade < 1 && prev) drawPage(prev[2]);
-    drawPage(cur[2], fade);
-  };
+  const drawBook = (tb: number) => { book.pose(tb); v.renderer.render(book.scene, book.camera); return glCanvas; };
   const frame = (t: number) => {
     x.fillStyle = `#${SKY.getHexString()}`; x.fillRect(0, 0, W, H);
     if (t < tBook) drawModel(t);
-    else if (t < tBook + 0.6) {   // the bust fades out, the cover comes in
+    else if (t < tBook + 0.6) {   // cross-fade from the bust to the booklet
       drawModel(t);
-      const u = easeIO((t - tBook) / 0.6);
-      x.fillStyle = `#${SKY.getHexString()}`; x.globalAlpha = u; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
-      drawPage(turns[0][2], u);
-    } else drawBook(t - tBook);
+      x.globalAlpha = easeIO((t - tBook) / 0.6); x.drawImage(drawBook(t - tBook), 0, 0, W, H); x.globalAlpha = 1;
+    } else x.drawImage(drawBook(t - tBook), 0, 0, W, H);
     x.fillStyle = '#16242f'; x.textAlign = 'center';
     if (o.format === 'story') {
       x.font = `800 ${Math.round(72 * k)}px ${FONT}`; x.fillText(title, W / 2, 150 * k);
@@ -109,7 +98,7 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
 
   const ac = new AudioContext({ sampleRate: 48000 });
   const src = ac.createBufferSource();
-  src.buffer = makeSoundtrack(m, tl, duration, { at: tBook, flips: turns.slice(1).map(([s0, d]) => [s0, Math.min(d, 0.3)] as [number, number]) });
+  src.buffer = makeSoundtrack(m, tl, duration, { at: tBook, flips: book.sched });
   const dest = ac.createMediaStreamDestination();
   src.connect(dest);
   frame(0);
@@ -137,6 +126,6 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
   await done;
   src.disconnect(); await ac.close();
   stream.getTracks().forEach(tr => tr.stop());
-  v.dispose();
+  v.dispose(); book.dispose();
   return { blob: new Blob(chunks, { type: kind.mime.split(';')[0] }), ext: kind.ext };
 }
