@@ -1,6 +1,6 @@
 // Off-screen renders of the model for the instruction booklet: the whole bust
-// (cover) and each step (earlier pieces pale, this step's pieces in colour
-// with a yellow outline, later pieces hidden).
+// (cover) and each step (every piece placed so far in its colour, this step's
+// pieces outlined in yellow, later pieces hidden).
 import * as THREE from 'three';
 import type { Model } from '../core/build';
 import { COLOR_BY_ID, renderHex } from '../core/palette';
@@ -117,7 +117,7 @@ export class StepRenderer {
 
   stepView(si: number): HTMLCanvasElement {
     const ids = this.m.steps[si];
-    this.show(i => (this.step[i] < si ? 1 : this.step[i] === si ? 2 : 0));
+    this.show(i => (this.step[i] <= si ? 2 : 0));
     this.outline(ids);
     const s = this.scale;
     const topY = Math.max(...ids.map(i => (this.m.pieces[i].y + this.m.pieces[i].h) * PL));
