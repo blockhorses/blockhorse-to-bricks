@@ -22,8 +22,8 @@ export interface VideoOptions { format: VideoFormat; label: string; small?: bool
 /** The booklet in the video: a few pages read slowly, then a quick riffle that ends on the finished model. */
 const SLOW = 1.2, FAST = 0.13, HOLD = 1.4;
 function bookPlan(steps: number) {
-  const last = steps + 1, pick = (f: number) => 2 + Math.round(f * (steps - 1));
-  // cover, a step at the start, the middle and the end, then the finished model (the last step)
+  const last = steps + 2, pick = (f: number) => 2 + Math.round(f * (steps - 1));
+  // cover, a step at the start, the middle and the end, then the finished model page
   const slow = [...new Set([1, pick(0.08), pick(0.5), pick(0.85), last])];
   const fast: number[] = [];
   for (let i = 0; i < 10; i++) fast.push(2 + Math.round((i * (steps - 1)) / 10));
@@ -114,7 +114,7 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
   src.connect(dest);
   frame(0);
   const stream = new MediaStream([...out.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-  const rec = new MediaRecorder(stream, { mimeType: kind.mime, videoBitsPerSecond: o.small ? 5_000_000 : 9_000_000, audioBitsPerSecond: 128_000 });
+  const rec = new MediaRecorder(stream, { mimeType: kind.mime, videoBitsPerSecond: o.small ? 2_000_000 : 3_000_000, audioBitsPerSecond: 128_000 });
   const chunks: Blob[] = [];
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
   const done = new Promise<void>(res => { rec.onstop = () => res(); });

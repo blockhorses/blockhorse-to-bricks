@@ -89,15 +89,16 @@ export class PageMaker {
   constructor(private m: Model, private grid: PunkGrid, private o: PageOptions) {
     this.NB = Math.ceil(m.bom.length / BOM_PER);
     this.steps = m.steps.length;
-    this.total = 1 + m.steps.length + this.NB;
+    this.total = 2 + m.steps.length + this.NB;   // cover, steps, finished model, parts
     this.r = new StepRenderer(m, o.renderSize ?? 1100, o.label);
     this.title = `${o.label ? `Punk ${o.label}` : 'Your Punk'} · ${m.size === 'xl' ? 'XL' : 'Mini'} brick bust`;
   }
-  /** "Cover", "Step 12", "Parts 1/2" */
+  /** "Cover", "Step 12", "Finished model", "Parts 1/2" */
   label(n: number): string {
     if (n === 1) return 'Cover';
     if (n <= this.steps + 1) return `Step ${n - 1}`;
-    return this.NB > 1 ? `Parts ${n - this.steps - 1}/${this.NB}` : 'Parts';
+    if (n === this.steps + 2) return 'Finished model';
+    return this.NB > 1 ? `Parts ${n - this.steps - 2}/${this.NB}` : 'Parts';
   }
   page(n: number): HTMLCanvasElement {
     const { m, grid, o, r, title } = this, c = m.checks, NB = this.NB;
@@ -142,7 +143,16 @@ export class PageMaker {
   footer(x, si + 2, title);
       return pg;
     }
-    const bp = n - this.steps - 2;
+    if (n === this.steps + 2) {
+  const [pg, x] = blankPage();
+  x.drawImage(r.cover(), (PW - 1040) / 2, -10, 1040, 1040);
+  x.fillStyle = INK; x.font = `bold 54px ${FONT}`; x.fillText('Finished model', 60, 90);
+  x.font = `26px ${FONT}`; x.fillStyle = '#44607a';
+  x.fillText(`${c.pieces.toLocaleString('en')} pieces · ${m.steps.length} steps · approx. ${m.dims[0]} × ${m.dims[1]} × ${m.dims[2]} cm`, 60, 130);
+  footer(x, n, title);
+      return pg;
+    }
+    const bp = n - this.steps - 3;
   const [pg, x] = blankPage();
   x.fillStyle = INK; x.font = `bold 54px ${FONT}`; x.fillText('Parts inventory' + (NB > 1 ? ` (${bp + 1}/${NB})` : ''), 60, 90);
   x.font = `26px ${FONT}`; x.fillStyle = '#44607a';
