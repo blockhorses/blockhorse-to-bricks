@@ -1,6 +1,6 @@
 // Reference builder: the BlockHorses 32x32 sprite (blockhorses/BlockHorses templates/horse.js) -> brick models.
 // Prototype code from the design session. Port it to TypeScript; don't ship it as is.
-// Usage: node build-blockhorse.js <horse|pegasus|unicorn|winged> [seeds=3000]
+// Usage: node build-blockhorse.cjs <horse|pegasus|unicorn|winged> [seeds=3000]
 // Writes builds/<species>.json: { top, seed, pieces: [x, z, y, w, d, h, role, kind?] }
 // Units: x, z in studs (x = tail -> head, z = depth, z = 0 is the base's front edge); y, h in plates (brick = 3).
 // One pixel = one stud wide, one brick tall. Roles: B base, C coat, M mane, T tail, E eye, S shoes, U horn, W wings.
@@ -38,9 +38,12 @@ function sprite(species) {
   return px;
 }
 // z ranges for a pixel; returns list of [z, role]
-function depth(p, r) {
+// The neck rises out of the body at row 14 and across the front of row 15 (x >= 19).
+// The SVG groups those pixels with the body, but they are built at neck (head) depth.
+const isNeck = (part, r, x) => part === 'core' && (r === 14 || (r === 15 && x >= 19));
+function depth(p, r, x) {
   const all = (a, b, r) => { const o = []; for (let z = a; z <= b; z++) o.push([z, r]); return o; };
-  const { role, part } = p;
+  const { role } = p, part = isNeck(p.part, r, x) ? 'head' : p.part;
   if (role === 'W') {
     if (part === 'core') return [[0, 'W'], ...all(1, 4, 'C'), [5, 'W']];
     return [[0, 'W'], [5, 'W']];
@@ -64,7 +67,7 @@ for (const [k, p] of px) {
   const [x, r] = k.split(',').map(Number), b = 31 - r;
   if (!grid.has(b)) grid.set(b, new Map());
   if (p.role === 'U') continue; // horn is placed by hand, centred on a jumper
-  for (const [z, role] of depth(p, r)) grid.get(b).set(`${x},${z + ZOFF}`, role);
+  for (const [z, role] of depth(p, r, x)) grid.get(b).set(`${x},${z + ZOFF}`, role);
 }
 const ROWS = 32 - topRow;
 const filled = (b, x, z) => b < 0 ? (x >= 0 && x < BASE_W && z >= 0 && z < BASE_D) : !!(grid.get(b) && grid.get(b).has(`${x},${z}`));
