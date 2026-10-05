@@ -10,6 +10,8 @@
 
 ## Legal notice
 
-Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable. No purchases, payments or personal data go through this site.
+Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group or BrickLink. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable. No purchases, payments or personal data go through this site.
 
 The site is 100% static: everything runs in your browser. There is no server, no payment, no affiliate link and no visitor tracking.
+
+BlockHorse to Bricks is based on [Punk to Bricks](https://github.com/hs7j4yk4sz-boop/punk-to-bricks) by John Karp, under the MIT licence. BlockHorses: [blockhorses/BlockHorses](https://github.com/blockhorses/BlockHorses).

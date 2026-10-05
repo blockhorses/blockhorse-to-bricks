@@ -1,62 +1,74 @@
-# Punk to Bricks
+# BlockHorse to Bricks
 
-Turn your CryptoPunk into a brick bust you can really build.
+Turn any of the 260 [BlockHorses](https://github.com/blockhorses/BlockHorses) into a brick model you can really build.
 
 <p align="center">
-  <a href="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/"><img src="public/og.png" alt="Punk to Bricks: turn your Punk into a brick bust you can really build" width="720"></a>
+  <a href="https://blockhorses.github.io/blockhorse-to-bricks/"><img src="public/og.png" alt="BlockHorse to Bricks: turn your BlockHorse into a brick model you can really build" width="720"></a>
 </p>
 
-<h3 align="center">👉 <a href="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/">Open Punk to Bricks</a> 👈</h3>
-<p align="center">Free · runs in your browser · your image never leaves your device</p>
+<h3 align="center">👉 <a href="https://blockhorses.github.io/blockhorse-to-bricks/">Open BlockHorse to Bricks</a> 👈</h3>
+<p align="center">Free · runs in your browser</p>
 
 ## How to use
 
-1. **Type your Punk number** (0 to 9999), or **drop its image**: the original PNG, a marketplace download or a phone screenshot. No Punk at hand? Click one of the examples.
-2. **① Your bust**: watch it build in 3D, pick **Mini** (about 400 pieces) or **XL** (about 1,250 pieces), turn it with your finger or mouse. The key figures are big: pieces, steps, lots to buy, size; "More info" shows every check. Download a video of the build (square or 9:16).
-3. **② Instructions**: flip through the step-by-step booklet right on the page, then download it as a PDF or as a full kit (PDF + parts list).
-4. **③ Buy the bricks**: see your shopping list (every part, its quantity, red if LEGO sells it, blue if only BrickLink has it), then **Buy at LEGO** (a Pick a Brick upload file) or **Buy on BrickLink** (a wanted list to paste). "Only parts LEGO sells" rebuilds your bust with parts LEGO sells and runs every check again.
+1. **Pick your BlockHorse**: type its number (1 to 260), step through them with ‹ and ›, try **Random**, or click one of the examples (one horse, pegasus, unicorn and winged unicorn). The original pixel sprite and the token's name are shown, for example "#6 Purple Winged Unicorn".
+2. **① Your horse**: watch it build in 3D and turn it with your finger or mouse. Choose the base colour: Turf, Dirt (the default), Sand or Stone. Each trait's original colour is shown next to the brick colour it became. "More info" shows every check. Download a video of the build (square or 9:16).
+3. **② Instructions**: flip through the step-by-step booklet on the page, then download it as a PDF or as a full kit (PDF and parts list). Every step page shows which way is head and tail; the front, facing you, is the side the sprite shows.
+4. **③ Buy the bricks**: see your shopping list, then **Buy at LEGO** (a Pick a Brick upload file) or **Buy on BrickLink** (a wanted list to paste). **Only colours LEGO sells** never changes the model: per trait, it picks the nearest colour LEGO sells in every part that trait uses.
 
 <p align="center">
-  <img src="docs/bust.png" alt="① Your bust: the 3D bust and its key figures" width="640">
+  <img src="docs/horse.png" alt="① Your horse: the 3D model, its key figures and trait colours" width="640">
   <img src="docs/instructions.png" alt="② Instructions: the booklet on the page" width="640">
   <img src="docs/buy.png" alt="③ Buy the bricks: shopping list, Buy at LEGO, Buy on BrickLink" width="640">
 </p>
 
+## The build
+
+- **Scale.** One sprite pixel is one stud wide and one brick (3 plates) tall, so the model is 20% taller than the sprite. Every build is 32 × 8 studs (25.6 × 6.4 cm) on a base of two crossed plate layers.
+- **Depth.** The model is 6 studs deep. The legs and shoes come in two pairs (front and back), the body is full depth, the head 4 studs, the ears stand at each side with the mane between them, the tail and mane crest are 2 studs, and each wing is one stud thick on the outer face.
+- **Horn.** A unicorn's horn is one stud thick and centred on the head, half a stud off the grid: it starts on a **1 × 2 jumper plate** (BrickLink 15573, one centre stud), two 1 × 2 plates finish that brick row, and 1-stud-wide bricks step up and forward. Each step is held by a single stud, by design.
+- **Four builds.** Every horse of a species uses the same build; only the colours change. The builds are made offline by `scripts/build-horses.ts`, which searches 3,000 random tilings per species and keeps the best (one connected group, no weak joints, the fewest seams and pieces). They are in `src/data/builds.json`.
+
+| Species | Horses | Pieces | Height incl. base | Seed |
+|---|---|---|---|---|
+| Horse | 227 | 174 | 23.7 cm | 1201 |
+| Pegasus | 11 | 206 | 28.5 cm | 1150 |
+| Unicorn | 15 | 179 | 25.6 cm | 2241 |
+| Winged Unicorn | 7 | 212 | 28.5 cm | 1150 |
+
 ## What's inside
 
-- **100% static.** Everything runs in the visitor's browser (a Web Worker does the heavy lifting). No server, no AI, no API key, no tracking.
-- **Two sizes.** Mini: 1 pixel = 1 stud, rows alternate one brick and two plates so pixels stay square. XL: 1 pixel = 2×2 studs, 5 plates tall, hollow with 2-stud walls.
-- **Honest checks.** Every model is checked on its final piece list: studs connected, 0 floating pieces, 0 collisions, centre of mass over the base, weak joints. A failed check is shown, never hidden. Tested on all 10,000 CryptoPunks, in both sizes.
+- **100% static.** Everything runs in the visitor's browser. No server, no AI, no API key, no tracking.
+- **Honest checks.** Every model is checked on its final piece list: studs connected, 0 floating pieces, 0 collisions, centre of mass over the base, and weak joints. Studs are matched on a half-stud grid, so the jumper's single centre stud and the half-stud horn are checked like everything else. A piece larger than 1 × 1 held by a single stud counts as a weak joint; a 1 × 1 always sits on one stud, so it doesn't. A failed check is shown, never hidden.
+- **Colours.** Each trait (coat, mane, tail, eyes, shoes, horn, wings) is a CSS colour name in the token's SVG. It is matched to the nearest of 35 opaque brick colours with CIEDE2000. Traits that touch keep different brick colours when their original colours differ: mane/coat, tail/coat, eyes/coat, shoes/coat, wings/coat, eyes/mane, horn/mane and horn/coat.
 - **Order the bricks.** A Pick a Brick upload file in LEGO's own CSV format (400 references and 999 units per line at most, split into several files when needed) and a BrickLink wanted list (Want → Upload → "Upload BrickLink XML format"). Element IDs come from [Rebrickable](https://rebrickable.com)'s free exports, built into `src/data/elements.json` by `scripts/build-elements.ts` (no live calls). Nothing is sold here: you order and pay on LEGO or BrickLink.
-- **Exports.** Full kit ZIP (PDF booklet, one page per layer with the step's parts in colour and outlined in yellow, plus parts inventory; CSV parts list), and square or 9:16 videos of the build ending on the flipping booklet, with brick clicks made in Web Audio.
+- **Exports.** Full kit ZIP (PDF booklet with one page per brick row, the step's parts in colour and outlined in yellow, plus a parts inventory; CSV parts list), and square or 9:16 videos of the build ending on the flipping booklet.
 
-Inspired by [@victormustar](https://x.com/victormustar)'s Microduck and by [my own CryptoPunk bust](https://github.com/hs7j4yk4sz-boop/cryptopunk-brick-bust).
+## Data
 
-## How it works
-
-1. **Find the Punk** (`src/core/detect.ts`). Look for a flat background region whose bounding box is a square, read the 24×24 grid from the centre of each cell, and tell background from Punk with a tolerance sized to the image noise (exact on PNG, tolerant on JPEG and screenshots).
-2. **Pick brick colours** (`src/core/palette.ts`). Nearest of 38 common BrickLink colours (CIEDE2000); two touching colours that differ are kept apart, the smaller one moves.
-3. **Understand the pixels** (`src/core/analyze.ts`). Solid head vs. thin parts (brims, pipes, cigarettes, ears: a 4×4 morphological opening), floating details (smoke) held by clear supports, and the colour each pixel shows on the sides and back.
-4. **Build** (`src/core/build.ts`, `src/core/tile.ts`). Stud cells per layer, rounded top and back corners, hollow inside, base sized to the centre of mass. Each layer is filled greedily with real bricks, plates and tiles, alternating direction; hidden cells may take any colour, which lets pieces bridge from a visible detail into the body. Anything left floating is repaired (re-tiling around it, bridging from above or below, or a support stack).
-5. **Check** (`src/core/check.ts`) the final piece list.
+- `src/data/horses.json`: trait colours of tokens 1 to 260. Regenerate with `npx tsx scripts/extract-horses.ts path/to/BlockHorses`, from a clone of [blockhorses/BlockHorses](https://github.com/blockhorses/BlockHorses) (`api/horse/<n>.svg`).
+- `src/data/builds.json`: the four builds. Regenerate with `npx tsx scripts/build-horses.ts` (about 16 s). The tests check that it reproduces the agreed builds in `blockhorse-reference/builds/` piece for piece.
+- `src/data/elements.json`: LEGO element IDs. Regenerate with `npx tsx scripts/build-elements.ts` after downloading Rebrickable's `elements`, `parts` and `colors` exports into `real/` (git-ignored).
 
 ## Develop
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # unit tests (detection, solidity, exports, all example Punks)
+npm test           # unit tests: builds, horses, checks, colours, exports
 npm run build      # static site in dist/
 ```
 
-Typing a Punk number uses `public/punks.png`, the official image of all 10,000 CryptoPunks from [larvalabs/cryptopunks](https://github.com/larvalabs/cryptopunks): it is downloaded once, only when a visitor types a number, and the Punk is cut out in the browser. Tests on all 10,000 Punks run when that same file is copied to `real/punks.png` (git-ignored). The drawings in test/fixtures are only used by the tests.
+`scripts/ui-flow.cjs` drives the built site in Chrome and screenshots every section for one horse of each species. `scripts/site-images.cjs` renders `public/og.png` and the screenshots in `docs/`.
+
+## Credits
+
+Based on [Punk to Bricks](https://github.com/hs7j4yk4sz-boop/punk-to-bricks) by John Karp (MIT), which was inspired by [@victormustar](https://x.com/victormustar)'s Microduck. BlockHorses by Andrew B Coathup: [blockhorses/BlockHorses](https://github.com/blockhorses/BlockHorses) (MIT).
 
 ## Notes
 
-Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable. No purchases, payments or personal data go through this site. Models are computer-checked, not physically build-tested.
-
-Made by John Karp · NFT Morning.
+Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group or BrickLink. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable. No purchases, payments or personal data go through this site. Models are computer-checked, not physically build-tested.
 
 ## License
 
-[MIT](LICENSE). See also the [disclaimer](DISCLAIMER.md). The license covers the code only, not CryptoPunks images or any trademark.
+[MIT](LICENSE). See also the [disclaimer](DISCLAIMER.md). The license covers the code only, not any trademark.

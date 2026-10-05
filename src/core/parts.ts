@@ -35,7 +35,7 @@ export function partId(kind: Kind, w: number, d: number): string {
 
 export function partName(kind: Kind, w: number, d: number): string {
   const a = Math.min(w, d), b = Math.max(w, d);
-  return kind === 'jumper' ? `Jumper plate ${a} x ${b}, 1 centre stud` : `${kind === 'brick' ? 'Brick' : 'Plate'} ${a} x ${b}`;
+  return kind === 'jumper' ? `Jumper plate ${a} x ${b}` : `${kind === 'brick' ? 'Brick' : 'Plate'} ${a} x ${b}`;
 }
 
 /** Stud centres on top of a piece, in studs. A jumper has one, in the middle. */

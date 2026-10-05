@@ -62,10 +62,10 @@ function footer(x: CanvasRenderingContext2D, n: number, title: string) {
 function orientation(x: CanvasRenderingContext2D, X: number, Y: number) {
   x.save();
   x.fillStyle = '#F3F7FB'; x.strokeStyle = '#9fbfd8'; x.lineWidth = 2;
-  x.beginPath(); x.roundRect(X, Y, 330, 104, 14); x.fill(); x.stroke();
+  x.beginPath(); x.roundRect(X, Y, 440, 104, 14); x.fill(); x.stroke();
   x.fillStyle = INK; x.font = `bold 24px ${FONT}`; x.textAlign = 'left';
   x.fillText('◀ Tail', X + 20, Y + 40);
-  x.textAlign = 'right'; x.fillText('Head ▶', X + 310, Y + 40);
+  x.textAlign = 'right'; x.fillText('Head ▶', X + 420, Y + 40);
   x.textAlign = 'left'; x.font = `20px ${FONT}`; x.fillStyle = '#44607a';
   x.fillText('Front faces you: the side the sprite shows', X + 20, Y + 78);
   x.restore();
@@ -147,7 +147,7 @@ export class PageMaker {
   });
   x.fillStyle = INK; x.font = `bold 110px ${FONT}`;
   x.fillText(String(si + 1), 60, Math.min(PH - 120, 40 + bh + 120));
-  orientation(x, PW - 380, PH - 220);
+  orientation(x, PW - 500, 40);
   footer(x, si + 2, title);
       return pg;
     }
@@ -157,7 +157,7 @@ export class PageMaker {
   x.fillStyle = INK; x.font = `bold 54px ${FONT}`; x.fillText('Finished model', 60, 90);
   x.font = `26px ${FONT}`; x.fillStyle = '#44607a';
   x.fillText(`${c.pieces.toLocaleString('en')} pieces · ${m.steps.length} steps · approx. ${m.dims[0]} × ${m.dims[1]} × ${m.dims[2]} cm`, 60, 130);
-  orientation(x, PW - 380, PH - 220);
+  orientation(x, PW - 500, PH - 220);
   footer(x, n, title);
       return pg;
     }

@@ -88,7 +88,7 @@ function renderTraits(m: Model) {
   const rows = m.palette.map(t => {
     const c = COLOR_BY_ID.get(t.color)!;
     const why = t.color !== t.nearest ? ` · nearest was ${COLOR_BY_ID.get(t.nearest)!.name}` : '';
-    return `<li title="${TRAIT_NAME[t.trait]}: ${t.css} (${t.hex}) → ${c.name}${why}"><b>${TRAIT_NAME[t.trait]}</b><i class="sw" style="background:${t.hex}"></i><span class="from">${t.css} →</span><i class="sw" style="background:${renderHex(t.color)}"></i><span>${c.name}${t.legoAll ? '' : ' <small>· some BrickLink only</small>'}</span></li>`;
+    return `<li title="${TRAIT_NAME[t.trait]}: ${t.css} (${t.hex}) → ${c.name}${why}"><b>${TRAIT_NAME[t.trait]}</b><i class="sw" style="background:${t.hex}"></i><span class="from">${t.css} →</span><i class="sw" style="background:${renderHex(t.color)}"></i><span>${c.name}</span>${t.legoAll ? '' : '<small>some parts BrickLink only</small>'}</li>`;
   });
   const b = BASES.find(x => x.id === m.base)!, bc = COLOR_BY_ID.get(m.base)!;
   rows.push(`<li><b>Base</b><i class="sw" style="background:${renderHex(m.base)}"></i><span>${b.name} · ${bc.name}</span></li>`);

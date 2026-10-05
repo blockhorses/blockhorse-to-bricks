@@ -107,7 +107,7 @@ export class StepRenderer {
     this.outline(ids);
     const s = this.scale;
     const topY = Math.max(...ids.map(i => (this.m.pieces[i].y + this.m.pieces[i].h) * PL));
-    return this.shoot(32, 32, 125 * s, Math.max(6 * s, Math.min(22 * s, topY - 4 * s)));
+    return this.shoot(32, 30, 100 * s, Math.max(6 * s, Math.min(16 * s, topY - 4 * s)));
   }
 
   dispose() {
