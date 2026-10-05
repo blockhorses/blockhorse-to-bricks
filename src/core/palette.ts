@@ -1,6 +1,6 @@
-// Short list of common brick colours (BrickLink colour IDs and names) and the
-// mapping from Punk colours to the closest real brick colour.
-import { deltaE, hexToRgb, rgbToLab, type Lab, type RGB } from './color';
+// Short list of common brick colours (BrickLink colour IDs and names), the base
+// colours to choose from, and the nearest brick colour to a trait colour.
+import { deltaE, hexToRgb, rgbToLab, type Lab } from './color';
 
 export interface BrickColor {
   id: number;          // BrickLink colour ID
@@ -52,63 +52,23 @@ export const BRICK_COLORS: BrickColor[] = [
 ];
 
 export const COLOR_BY_ID = new Map(BRICK_COLORS.map(c => [c.id, c]));
-export const BLACK = 11, TRANS_CLEAR = 12, BASE_GRAY = 85;
 const LAB = new Map<number, Lab>(BRICK_COLORS.map(c => [c.id, rgbToLab(hexToRgb(c.hex))]));
-// Trans-Clear is reserved for support pieces; never matched from the image.
-const MATCHABLE = BRICK_COLORS.filter(c => c.id !== TRANS_CLEAR);
-/** A transparent colour is only used for small details (glasses lenses, etc.). */
-const TRANS_MAX_PIXELS = 16;
-const MAX_EXTRA = 8;
+/** Trait colours are matched to the opaque colours only. */
+export const OPAQUE = BRICK_COLORS.filter(c => !c.trans);
 
-export interface PunkColor { rgb: RGB; count: number }
+/** Base colours: Dirt (Reddish Brown) is the default. */
+export const BASES = [
+  { id: 6, name: 'Turf' },
+  { id: 88, name: 'Dirt' },
+  { id: 2, name: 'Sand' },
+  { id: 85, name: 'Stone' },
+] as const;
+export const DEFAULT_BASE = 88;
 
-/**
- * Map each Punk colour to a brick colour. Starts with the nearest colour, then
- * resolves clashes: two clearly different Punk colours that touch each other
- * must not collapse into the same brick colour (e.g. skin vs. beard).
- */
-export function mapColors(colors: PunkColor[], touching: Set<string>): number[] {
-  const labs = colors.map(c => rgbToLab(c.rgb));
-  const ranked = colors.map((c, i) => {
-    const pure = c.rgb[0] < 8 && c.rgb[1] < 8 && c.rgb[2] < 8;
-    const cands = MATCHABLE.filter(b => !b.trans || c.count <= TRANS_MAX_PIXELS)
-      .map(b => ({ id: b.id, d: pure ? (b.id === BLACK ? 0 : 999) : deltaE(labs[i], LAB.get(b.id)!) }))
-      .sort((a, b) => a.d - b.d);
-    return cands;
-  });
-  const pick = ranked.map(() => 0);
-  const key = (i: number, j: number) => (i < j ? `${i},${j}` : `${j},${i}`);
-  for (let iter = 0; iter < 50; iter++) {
-    let changed = false;
-    for (let i = 0; i < colors.length; i++) for (let j = i + 1; j < colors.length; j++) {
-      if (ranked[i][pick[i]].id !== ranked[j][pick[j]].id) continue;
-      if (!touching.has(key(i, j)) || deltaE(labs[i], labs[j]) < 8) continue;
-      // move whichever colour loses least by going to its next free choice
-      const next = (k: number) => {
-        for (let p = pick[k] + 1; p < ranked[k].length; p++) {
-          const id = ranked[k][p].id;
-          const clash = colors.some((_, m) => m !== k && touching.has(key(k, m)) && ranked[m][pick[m]].id === id && deltaE(labs[k], labs[m]) >= 8);
-          if (!clash) return p;
-        }
-        return -1;
-      };
-      const ni = next(i), nj = next(j);
-      // move the colour that costs least overall (ΔE lost × pixels): small
-      // details move, big areas keep their best match. A detail may drift
-      // further to stay visible; a big area only to a still-good match.
-      const cost = (k: number, n: number) => {
-        if (n < 0) return Infinity;
-        const extra = ranked[k][n].d - ranked[k][pick[k]].d;
-        return extra > (colors[k].count <= 6 ? 25 : MAX_EXTRA) ? Infinity : extra * colors[k].count;
-      };
-      const ci = cost(i, ni), cj = cost(j, nj);
-      if (ci === Infinity && cj === Infinity) continue;
-      if (ci <= cj) pick[i] = ni; else pick[j] = nj;
-      changed = true;
-    }
-    if (!changed) break;
-  }
-  return ranked.map((r, i) => r[pick[i]].id);
+/** Opaque brick colours from nearest to furthest (CIEDE2000) from a hex colour. */
+export function nearestColors(hex: string): { id: number; d: number }[] {
+  const lab = rgbToLab(hexToRgb(hex));
+  return OPAQUE.map(c => ({ id: c.id, d: deltaE(lab, LAB.get(c.id)!) })).sort((a, b) => a.d - b.d);
 }
 
 /** Colour to draw a brick with (3D view, instructions). */

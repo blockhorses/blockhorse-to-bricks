@@ -1,132 +1,100 @@
-import type { Model, SizeId } from './core/build';
-import { rgbToHex } from './core/color';
-import type { PunkGrid, RGBAImage } from './core/detect';
+import { buildModel, type Model } from './core/build';
+import { EXAMPLES, horse, slug, SPECIES_NAME, spriteSVG, title, TOKENS, TRAIT_NAME } from './core/horse';
+import { BASES, COLOR_BY_ID, DEFAULT_BASE, renderHex } from './core/palette';
 import { Viewer } from './viewer/scene';
 import { brickLinkXML, partsCSV } from './export/parts';
 import { brickLinkRemainderXML, orderSummary, pickABrickFiles } from './export/order';
 import { icon } from './export/pdf';
-import { renderHex } from './core/palette';
-import type { BuildReply, BuildRequest } from './worker/build.worker';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const worker = new Worker(new URL('./worker/build.worker.ts', import.meta.url), { type: 'module' });
-let nextId = 1;
-const pending = new Map<number, (r: BuildReply) => void>();
-worker.onmessage = (e: MessageEvent<BuildReply>) => { pending.get(e.data.id)?.(e.data); pending.delete(e.data.id); };
-const build = (req: Omit<BuildRequest, 'id'>) => new Promise<BuildReply>(res => { const id = nextId++; pending.set(id, res); worker.postMessage({ ...req, id }); });
-
 const isPhone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
-const viewer = new Viewer($('view'), { lowPoly: isPhone, label: '' });
+const viewer = new Viewer($('view'), { lowPoly: isPhone });
 viewer.onFinished = () => { $('hint').hidden = false; };
 
-let grid: PunkGrid | null = null;
-let size: SizeId = 'xl';
-// one model per size and "prefer LEGO parts" choice
-const models = new Map<string, Model>();
-let preferLego = false;
-const mkey = (s: SizeId) => `${s}|${preferLego}`;
+// per-viewer conveniences: the last base colour and LEGO choice
+const store = {
+  get(k: string) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k: string, v: string) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
+};
+let token = 0;
+let base = BASES.some(b => b.id === +(store.get('bh.base') ?? '')) ? +store.get('bh.base')! : DEFAULT_BASE;
+let legoOnly = store.get('bh.lego') === '1';
+let model: Model | null = null;
+const current = () => model;
 
 // ---------- input ----------
-async function fileToImage(blob: Blob): Promise<RGBAImage> {
-  const bmp = await createImageBitmap(blob);
-  const k = Math.min(1, 3000 / Math.max(bmp.width, bmp.height));
-  const w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d', { willReadFrequently: true })!;
-  x.imageSmoothingEnabled = false;
-  x.drawImage(bmp, 0, 0, w, h);
-  const d = x.getImageData(0, 0, w, h);
-  return { width: w, height: h, data: d.data };
+function showError(msg: string | null) {
+  const e = $('error'); e.hidden = !msg; e.textContent = msg ?? '';
 }
-/** Punk #n, cut from the official 10,000-Punk image (public/punks.png, loaded on first use), on the usual blue background. */
-let sheet: Promise<ImageData> | null = null;
-async function punkByNumber(n: number): Promise<RGBAImage> {
-  sheet ??= fetch('./punks.png').then(r => { if (!r.ok) throw new Error(); return r.blob(); })
-    .then(b => createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
-    .then(bmp => { const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height; const x = c.getContext('2d', { willReadFrequently: true })!; x.drawImage(bmp, 0, 0); return x.getImageData(0, 0, c.width, c.height); })
-    .catch(e => { sheet = null; throw e; });
-  const d = await sheet, X = (n % 100) * 24, Y = Math.floor(n / 100) * 24, BG = [0x63, 0x85, 0x96];
-  const data = new Uint8ClampedArray(24 * 24 * 4);
-  for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
-    const o = ((Y + y) * d.width + X + x) * 4, a = d.data[o + 3] / 255, k = (y * 24 + x) * 4;
-    for (let i = 0; i < 3; i++) data[k + i] = Math.round(d.data[o + i] * a + BG[i] * (1 - a));
-    data[k + 3] = 255;
-  }
-  return { width: 24, height: 24, data };
+function showHorse(t: number) {
+  const h = horse(t);
+  $('sprite').innerHTML = spriteSVG(h, 176);
+  $('sprite').setAttribute('aria-label', `The original sprite of BlockHorse ${title(h)}`);
+  $('horse-name').textContent = title(h);
+  $('horse-species').textContent = `${SPECIES_NAME[h.species]} · BlockHorse ${t} of ${TOKENS}`;
+  $<HTMLInputElement>('token').value = String(t);
+  document.querySelectorAll<HTMLButtonElement>('#examples button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.t! === t)));
 }
-$('by-number').addEventListener('submit', async e => {
-  e.preventDefault();
-  const raw = $<HTMLInputElement>('punk-number').value.trim();
-  if (!/^\d{1,4}$/.test(raw)) { showError('Type a Punk number from 0 to 9999.'); return; }
-  const n = +raw;
-  showError(null); $('result').hidden = false; busy(`Finding Punk #${n}…`);
-  let img: RGBAImage;
-  try { img = await punkByNumber(n); } catch { busy(null); showError('We couldn’t load the Punks. Check your connection, or drop your image instead.'); return; }
-  const plate = $<HTMLInputElement>('punkno'); plate.value = String(n);
-  await start(img);
-  viewer.setLabel(plateLabel());
-});
-
-/** An example Punk from public/examples (real Punks, used with permission). */
-async function exampleImage(file: string): Promise<RGBAImage> {
-  const res = await fetch(`./examples/${file}`);
-  return fileToImage(await res.blob());
-}
-
-async function start(image: RGBAImage) {
+/** Pick a token: show its sprite, build its model. */
+function choose(t: number, { scroll = false } = {}) {
+  if (!Number.isInteger(t) || t < 1 || t > TOKENS) { showError(`Type a BlockHorse number from 1 to ${TOKENS}.`); return; }
   showError(null);
+  token = t;
+  showHorse(t);
+  if (location.hash !== `#${t}`) history.replaceState(null, '', `#${t}`);
+  rebuild();
+  if (scroll) $('sec-horse').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+const wrap = (t: number) => ((t - 1 + TOKENS) % TOKENS) + 1;
+$('by-number').addEventListener('submit', e => { e.preventDefault(); choose(+$<HTMLInputElement>('token').value.trim(), { scroll: true }); });
+$('prev').addEventListener('click', () => choose(wrap(token - 1)));
+$('next').addEventListener('click', () => choose(wrap(token + 1)));
+$('random').addEventListener('click', () => { let t = token; while (t === token) t = 1 + Math.floor(Math.random() * TOKENS); choose(t); });
+for (const t of EXAMPLES) {
+  const h = horse(t), b = document.createElement('button');
+  b.type = 'button'; b.dataset.t = String(t); b.title = title(h);
+  b.innerHTML = `${spriteSVG(h, 40)}#${t}<small>${SPECIES_NAME[h.species].replace('Winged Unicorn', 'Winged')}</small>`;
+  b.addEventListener('click', () => choose(t));
+  $('examples').append(b);
+}
+for (const b of BASES) {
+  const el = document.createElement('button');
+  el.className = 'base'; el.setAttribute('role', 'radio'); el.dataset.base = String(b.id);
+  el.title = `${b.name}: ${COLOR_BY_ID.get(b.id)!.name}`;
+  el.innerHTML = `<i style="background:${renderHex(b.id)}"></i>${b.name}`;
+  el.addEventListener('click', () => { base = b.id; store.set('bh.base', String(base)); rebuild({ replay: false }); });
+  $('bases').append(el);
+}
+
+// ---------- the model ----------
+function rebuild({ replay = true } = {}) {
+  const t = performance.now();
+  const m = buildModel(token, { base, legoOnly });
+  model = m;
   $('result').hidden = false;
-  $('sec-bust').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  busy('Reading your Punk…');
-  const r = await build({ size, image, preferLego });
-  if (!r.ok) { busy(null); $('result').hidden = !grid; showError(r.message); return; }
-  grid = r.grid;
-  models.clear();
-  models.set(mkey(size), r.model);
-  drawGrid(r.grid);
-  show(r.model, r.ms);
-}
-
-async function setSize(s: SizeId) {
-  size = s;
-  document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.setAttribute('aria-checked', String(b.dataset.size === s)));
-  if (!grid) return;
-  const have = models.get(mkey(s));
-  if (!have) {
-    busy(`Building the ${s === 'xl' ? 'XL' : 'Mini'} model${preferLego ? ' with parts LEGO sells' : ''}…`);
-    const r = await build({ size: s, grid, preferLego });
-    if (!r.ok) { busy(null); showError(r.message); return; }
-    models.set(mkey(s), r.model);
-    show(r.model, r.ms);
-  } else show(have, 0);
-}
-
-function show(m: Model, ms: number) {
-  busy(null);
+  document.querySelectorAll<HTMLButtonElement>('.base').forEach(b => b.setAttribute('aria-checked', String(+b.dataset.base! === base)));
   $('hint').hidden = true;
   viewer.setModel(m);
-  viewer.play();
-  renderChecks(m, ms);
-  renderBustSub();
+  if (replay) viewer.play(); else viewer.skip();
+  renderChecks(m, performance.now() - t);
+  renderTraits(m);
+  $('horse-sub').textContent = `${title(m.horse)} · built and checked in your browser`;
   $('secnav').hidden = false;
   renderBuy(m);
   renderReader(m);
 }
 
-// ---------- panels ----------
-function busy(text: string | null) {
-  $('busy').hidden = text === null;
-  if (text) $('busy-text').textContent = text;
+function renderTraits(m: Model) {
+  const rows = m.palette.map(t => {
+    const c = COLOR_BY_ID.get(t.color)!;
+    const why = t.color !== t.nearest ? ` · nearest was ${COLOR_BY_ID.get(t.nearest)!.name}` : '';
+    return `<li title="${TRAIT_NAME[t.trait]}: ${t.css} (${t.hex}) → ${c.name}${why}"><b>${TRAIT_NAME[t.trait]}</b><i class="sw" style="background:${t.hex}"></i><span class="from">${t.css} →</span><i class="sw" style="background:${renderHex(t.color)}"></i><span>${c.name}${t.legoAll ? '' : ' <small>· some BrickLink only</small>'}</span></li>`;
+  });
+  const b = BASES.find(x => x.id === m.base)!, bc = COLOR_BY_ID.get(m.base)!;
+  rows.push(`<li><b>Base</b><i class="sw" style="background:${renderHex(m.base)}"></i><span>${b.name} · ${bc.name}</span></li>`);
+  $('traits').innerHTML = rows.join('');
 }
-function showError(msg: string | null) {
-  const e = $('error'); e.hidden = !msg; e.textContent = msg ?? '';
-}
-function drawGrid(g: PunkGrid) {
-  const c = $<HTMLCanvasElement>('grid'), x = c.getContext('2d')!, k = c.width / 24;
-  x.fillStyle = g.background ? rgbToHex(g.background) : '#638596'; x.fillRect(0, 0, c.width, c.height);
-  g.cells.forEach((row, r) => row.forEach((v, col) => { if (v >= 0) { x.fillStyle = rgbToHex(g.colors[v].rgb); x.fillRect(col * k, r * k, k, k); } }));
-  $('read-text').textContent = `24 × 24 pixels, ${g.colors.length} colours`;
-}
+
 function renderChecks(m: Model, ms: number) {
   const c = m.checks;
   const li = (cls: string, big: string, small: string) => `<li class="${cls}"><b>${big}</b>${small}</li>`;
@@ -135,10 +103,10 @@ function renderChecks(m: Model, ms: number) {
     c.collisions === 0 ? li('ok', '0 collisions', 'no two pieces overlap') : li('bad', `${c.collisions} collisions`, 'some pieces overlap: this model can’t be built as is'),
     c.floating === 0 ? li('ok', '0 floating', 'every piece is attached to the base') : li('bad', `${c.floating} floating`, 'pieces not attached to the base: this model can’t be built as is'),
     c.com.inside ? li('ok', 'Balanced', `centre of mass ${c.com.margin} studs inside the base`) : li('bad', 'Will tip over', 'the centre of mass is outside the base'),
-    c.weak === 0 ? li('ok', '0 weak joints', 'no piece hangs on a single stud') : li('warn', `${c.weak} weak joint${c.weak > 1 ? 's' : ''}`, 'held by a single stud: fine for display, handle gently'),
+    c.weak === 0 ? li('ok', '0 weak joints', 'no piece larger than 1 × 1 hangs on a single stud') : li('warn', `${c.weak} weak joint${c.weak > 1 ? 's' : ''}`, 'pieces larger than 1 × 1 held by a single stud: fine for display, handle gently'),
+    ...(c.single ? [li('ok', `${c.single} on one stud`, `1 × 1 piece${c.single > 1 ? 's' : ''} held by a single stud, as a 1 × 1 always is: not counted as weak`)] : []),
   ].join('');
-  $('notes').innerHTML = [...m.notes, `Computed in your browser${ms ? ` in ${(ms / 1000).toFixed(1)} s` : ''}. Computer-checked, not physically build-tested.`].map(n => `<li>${n}</li>`).join('');
-  // the key figures, big; the rest folds under "More info"
+  $('notes').innerHTML = [...m.notes, `Computed in your browser in ${Math.max(1, Math.round(ms))} ms. Computer-checked, not physically build-tested.`].map(n => `<li>${n}</li>`).join('');
   const stat = (v: string, l: string) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
   $('stats').innerHTML = stat(c.pieces.toLocaleString('en'), 'pieces') + stat(String(m.steps.length), 'steps')
     + stat(String(m.bom.length), 'lots to buy') + stat(`${m.dims[0]}×${m.dims[1]}×${m.dims[2]}`, 'cm');
@@ -146,33 +114,14 @@ function renderChecks(m: Model, ms: number) {
   const pill = $('pill');
   pill.className = solid ? 'pill' : 'pill bad';
   pill.textContent = solid ? '✓ Checked: solid' : '✗ Check failed';
-  $('status-short').textContent = `${c.floating} floating · ${c.collisions} collisions · ${c.com.inside ? 'balanced' : 'will tip over'}`;
+  $('status-short').textContent = `${c.floating} floating · ${c.collisions} collisions · ${c.weak} weak · ${c.com.inside ? 'balanced' : 'will tip over'}`;
 }
 
-// ---------- wiring ----------
-const drop = $('drop'), file = $<HTMLInputElement>('file');
-drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
-file.addEventListener('change', () => { const f = file.files?.[0]; if (f) fileToImage(f).then(start, () => showError('We couldn’t open this file. Use a PNG or JPG image.')); file.value = ''; });
-['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
-['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop', e => {
-  const f = [...((e as DragEvent).dataTransfer?.files ?? [])].find(f => f.type.startsWith('image/'));
-  if (f) fileToImage(f).then(start, () => showError('We couldn’t open this file. Use a PNG or JPG image.'));
-  else showError('That doesn’t look like an image. Drop a PNG or JPG of your Punk.');
-});
-window.addEventListener('paste', e => {
-  const f = [...(e.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'));
-  if (f) fileToImage(f).then(start, () => showError('We couldn’t read the pasted image.'));
-});
-document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.addEventListener('click', () => setSize(b.dataset.size as SizeId)));
 $('replay').addEventListener('click', () => { $('hint').hidden = true; viewer.play(); });
 $('skip').addEventListener('click', () => viewer.skip());
-export const plateLabel = () => { const n = $<HTMLInputElement>('punkno').value.replace(/\D/g, '').slice(0, 5); return n ? `#${n}` : ''; };
-$('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));  // the reader follows below
 
 // ---------- exports ----------
-const current = () => models.get(mkey(size)) ?? null;
-const baseName = () => `${plateLabel() ? 'punk-' + plateLabel().slice(1) : 'my-punk'}-${size}`;
+const baseName = () => (model ? slug(model.horse) : 'blockhorse');
 function save(blob: Blob, name: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
@@ -201,12 +150,13 @@ let thumbObserver: IntersectionObserver | null = null;
 async function renderReader(m: Model) {
   const { PageMaker } = await import('./export/pdf');
   if (current() !== m) return;
+  const keep = makerFor && makerFor.horse.token === m.horse.token ? pageNo : 1;
   maker?.dispose();
-  maker = new PageMaker(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1000 });
+  maker = new PageMaker(m, { renderSize: isPhone ? 800 : 1000 });
   makerFor = m;
   const range = $<HTMLInputElement>('pg-range');
   range.max = String(maker.total);
-  $('manual-sub').textContent = `${m.steps.length} steps · ${maker.total} pages · one page per layer`;
+  $('manual-sub').textContent = `${m.steps.length} steps · ${maker.total} pages · one page per brick row`;
   $('pdf-note').textContent = `PDF · ${maker.total} pages`;
   // thumbnails: placeholders now, drawn when they scroll into view
   thumbObserver?.disconnect();
@@ -235,7 +185,7 @@ async function renderReader(m: Model) {
     b.addEventListener('click', () => showPage(n));
     strip.append(b); thumbObserver.observe(b);
   }
-  showPage(1);
+  showPage(keep);
 }
 function showPage(n: number) {
   if (!maker) return;
@@ -261,33 +211,33 @@ $('page-view').addEventListener('keydown', e => { if (e.key === 'ArrowRight') sh
   $('page-view').addEventListener('pointerdown', e => { x0 = e.clientX; });
   $('page-view').addEventListener('pointerup', e => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) showPage(pageNo + (e.clientX < x0 ? 1 : -1)); x0 = null; });
 }
-let labelTimer = 0;
-$('punkno').addEventListener('input', () => {
-  clearTimeout(labelTimer);
-  labelTimer = window.setTimeout(() => { const m = current(); if (m) { const keep = pageNo; renderReader(m).then(() => showPage(keep)); } renderBustSub(); }, 500);
-});
-$('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
+const makePdf = async (m: Model) => {
   const { makeInstructions } = await import('./export/pdf');
   progress('Drawing the instructions…', 0);
-  const pdf = await makeInstructions(current()!, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
-  save(pdf, `${baseName()}-instructions.pdf`);
+  return makeInstructions(m, { renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
+};
+$('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
+  save(await makePdf(current()!), `${baseName()}.pdf`);
 }));
 $('dl-kit').addEventListener('click', () => run('Kit', async () => {
-  const [{ makeInstructions }, { makeZip }] = await Promise.all([import('./export/pdf'), import('./export/zip')]);
+  const { makeZip } = await import('./export/zip');
   const m = current()!, name = baseName();
-  progress('Drawing the instructions…', 0);
-  const pdf = await makeInstructions(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
-  const readme = [`${name} — made with Punk to Bricks`, '', `${m.checks.pieces} pieces · ${m.steps.length} steps · ${m.bom.length} lots · about ${m.dims.join(' × ')} cm`, '',
-    `${name}-instructions.pdf   step-by-step instructions, one page per layer`, `${name}-parts.csv   parts list (BrickLink part and colour numbers)`, '',
+  const pdf = await makePdf(m);
+  const readme = [`BlockHorse ${title(m.horse)} — made with BlockHorse to Bricks`, '',
+    `${m.checks.pieces} pieces · ${m.steps.length} steps · ${m.bom.length} lots · about ${m.dims.join(' × ')} cm`, '',
+    ...m.palette.map(t => `${TRAIT_NAME[t.trait]}: ${t.css} (${t.hex}) → ${COLOR_BY_ID.get(t.color)!.name}`),
+    `Base: ${BASES.find(b => b.id === m.base)!.name} → ${COLOR_BY_ID.get(m.base)!.name}`, '',
+    `${name}.pdf   step-by-step instructions, one page per brick row`, `${name}-parts.csv   parts list (BrickLink part and colour numbers)`, '',
     'To order the bricks, use "Buy the bricks" on the site: it makes your LEGO Pick a Brick and BrickLink lists.', '',
     'Models are generated automatically and checked by software only. They have NOT been physically built. Provided "as is", without warranty of any kind.',
-    'Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable.', ''].join('\r\n');
-  save(await makeZip([{ name: `${name}-instructions.pdf`, data: pdf }, { name: `${name}-parts.csv`, data: partsCSV(m) }, { name: 'README.txt', data: readme }]), `${name}-kit.zip`);
+    'Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group or BrickLink. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable.',
+    'Based on Punk to Bricks by John Karp (MIT). BlockHorses: https://github.com/blockhorses/BlockHorses', ''].join('\r\n');
+  save(await makeZip([{ name: `${name}.pdf`, data: pdf }, { name: `${name}-parts.csv`, data: partsCSV(m) }, { name: 'README.txt', data: readme }]), `${name}-kit.zip`);
 }));
 for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-square' : 'vid-story').addEventListener('click', () => run('Video', async () => {
   const { recordVideo } = await import('./export/video');
   progress('Preparing the booklet pages…', 0);
-  const { blob, ext } = await recordVideo(current()!, grid!, { format, label: plateLabel(), small: isPhone,
+  const { blob, ext } = await recordVideo(current()!, { format, small: isPhone,
     onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
   save(blob, `${baseName()}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
 }));
@@ -318,14 +268,12 @@ function renderBuy(m: Model) {
   $('lego-total').textContent = `/${total} lots`;
   $<HTMLButtonElement>('buy-lego').disabled = s.lego.length === 0;
   $('lego-guide').hidden = true;
-  const other = models.get(`${size}|${!preferLego}`);
-  const delta = other ? (preferLego ? m.checks.pieces - other.checks.pieces : other.checks.pieces - m.checks.pieces) : null;
-  const plus = delta === null ? '' : ` (${delta >= 0 ? '+' : ''}${delta} pieces)`;
-  $('lego-option').hidden = !preferLego && s.brickLinkOnly.length === 0;
-  $('prefer-text').textContent = preferLego
-    ? `Only parts LEGO sells: on${plus}, every check passed again`
-    : `Get all ${total} lots at LEGO: use only parts LEGO sells${plus}`;
-  $<HTMLInputElement>('prefer-lego').checked = preferLego;
+  $('lego-option').hidden = false;
+  const changed = m.palette.filter(t => legoOnly && t.color !== buildModel(m.horse.token, { base: m.base }).palette.find(q => q.trait === t.trait)!.color).length;
+  $('prefer-text').textContent = legoOnly
+    ? `Only colours LEGO sells: on${changed ? `, ${changed} trait colour${changed > 1 ? 's' : ''} changed` : ', no colour had to change'}. The model is the same.`
+    : 'Only colours LEGO sells: per trait, the nearest colour LEGO sells in every part that trait uses. The model stays the same.';
+  $<HTMLInputElement>('prefer-lego').checked = legoOnly;
   // BrickLink button: the missing lots, or everything if LEGO has it all
   const missing = s.brickLinkOnly.length;
   $('bl-n').textContent = String(missing || total);
@@ -337,11 +285,6 @@ function renderBuy(m: Model) {
   const files = pickABrickFiles(m).length;
   $('pab-files').textContent = files > 1 ? `${files} files, 400 references each at most` : 'one CSV file';
   $('dl-xml-rest').hidden = missing === 0;
-  // how many extra pieces "only parts LEGO sells" would cost: build it in the background
-  if (!preferLego && missing && !other && grid) {
-    const g0 = grid, s0 = size;
-    build({ size: s0, grid: g0, preferLego: true }).then(r => { if (r.ok && grid === g0) { models.set(`${s0}|true`, r.model); if (current() === m) renderBuy(m); } });
-  }
 }
 $('shop-more').addEventListener('click', () => {
   const open = $('shoplist').classList.toggle('open');
@@ -395,9 +338,9 @@ $('dl-pab').addEventListener('click', () => orderAction(m => { downloadLego(m); 
 $('dl-xml').addEventListener('click', () => orderAction(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
 $('dl-xml-rest').addEventListener('click', () => orderAction(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-missing.xml`)));
 $('prefer-lego').addEventListener('change', e => {
-  preferLego = (e.target as HTMLInputElement).checked;
-  $('prefer-text').textContent = 'Rebuilding with parts LEGO sells and checking again…';
-  setSize(size);
+  legoOnly = (e.target as HTMLInputElement).checked;
+  store.set('bh.lego', legoOnly ? '1' : '0');
+  rebuild({ replay: false });
 });
 
 // ---------- sticky section menu ----------
@@ -405,39 +348,22 @@ const secLinks = [...document.querySelectorAll<HTMLAnchorElement>('#secnav a')];
 const secObserver = new IntersectionObserver(es => {
   for (const e of es) if (e.isIntersecting) secLinks.forEach(a => a.classList.toggle('on', a.dataset.sec === e.target.id));
 }, { rootMargin: '-45% 0px -50% 0px' });
-['sec-bust', 'sec-manual', 'sec-buy'].forEach(id => secObserver.observe($(id)));
-function renderBustSub() {
-  const m = current(); if (!m) return;
-  $('bust-sub').textContent = `${plateLabel() ? `Punk ${plateLabel()} · ` : ''}${m.size === 'xl' ? 'XL' : 'Mini'} · built and checked in your browser`;
-}
+['sec-horse', 'sec-manual', 'sec-buy'].forEach(id => secObserver.observe($(id)));
 function shareLink() {
   const m = current();
   const text = m
-    ? `I turned my CryptoPunk into a ${m.checks.pieces.toLocaleString('en')}-piece brick bust you can really build 🧱\n\nMade with Punk to Bricks, inspired by @victormustar's Microduck.`
-    : 'Turn your CryptoPunk into a brick bust you can really build 🧱';
-  const url = location.origin + location.pathname;
+    ? `I turned BlockHorse ${title(m.horse)} into a ${m.checks.pieces.toLocaleString('en')}-piece brick model you can really build 🧱🐴`
+    : 'Turn your BlockHorse into a brick model you can really build 🧱🐴';
+  const url = location.origin + location.pathname + (m ? `#${m.horse.token}` : '');
   $<HTMLAnchorElement>('share-x').href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 }
 $('share-x').addEventListener('pointerdown', shareLink);
 $('share-x').addEventListener('focus', shareLink);
 
-const examples = [
-  { file: 'reference.png', title: 'The original bust' },
-  ...['a-1', 'b-1', 'b-2', 'b-3', 'b-4', 'b-5', 'b-6', 'c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6', 'c-7', 'c-8', 'c-9'].map(n => ({ file: `${n}.png`, title: 'Example Punk' })),
-];
-for (const ex of examples) {
-  const b = document.createElement('button');
-  b.title = ex.title;
-  const img = document.createElement('img');
-  img.src = `./examples/${ex.file}`; img.alt = ex.title; img.width = img.height = 24;
-  b.append(img);
-  b.addEventListener('click', () => exampleImage(ex.file).then(start, () => showError('We couldn’t load this example.')));
-  $('examples').append(b);
-}
-setSize(size);
+// start on the horse in the link (#6), else #6
+const fromHash = () => { const n = +location.hash.slice(1); return Number.isInteger(n) && n >= 1 && n <= TOKENS ? n : 0; };
+window.addEventListener('hashchange', () => { const n = fromHash(); if (n && n !== token) choose(n); });
+choose(fromHash() || 6);
 
-// dev/test hook: lets scripts drive the viewer frame by frame
-if (import.meta.env.DEV) {
-  Promise.all([import('./core/detect'), import('./core/build')]).then(([d, b]) =>
-    Object.assign(window, { ptb: { viewer, start, exampleImage, examples, setSize, build, detectPunk: d.detectPunk, buildModel: b.buildModel, fileToImage } }));
-}
+// dev/test hook: lets scripts drive the page
+if (import.meta.env.DEV) Object.assign(window, { bhb: { viewer, choose, buildModel, current } });

@@ -1,12 +1,11 @@
-// Off-screen renders of the model for the instruction booklet: the whole bust
+// Off-screen renders of the model for the instruction booklet: the whole horse
 // (cover) and each step (every piece placed so far in its colour, this step's
 // pieces outlined in yellow, later pieces hidden).
 import * as THREE from 'three';
 import type { Model } from '../core/build';
-import { COLOR_BY_ID, renderHex } from '../core/palette';
+import { renderHex } from '../core/palette';
 import { geoKey, pieceGeometry } from '../viewer/geometry';
-import { nameplateTexture } from '../viewer/scene';
-import { PL } from '../viewer/timeline';
+import { makeTimeline, PL } from '../viewer/timeline';
 
 const HIGHLIGHT = 0xF5B800;
 
@@ -20,11 +19,9 @@ export class StepRenderer {
   private home: THREE.Vector3[];
   private step: number[] = [];
   private edges = new THREE.Group();
-  private plate: THREE.Mesh | null = null;
-  private plateIdx: number;
   readonly scale: number;
 
-  constructor(private m: Model, size = 1100, label = '') {
+  constructor(private m: Model, size = 1100) {
     this.canvas.width = this.canvas.height = size;
     this.gl = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
     this.gl.setPixelRatio(1); this.gl.setSize(size, size, false);
@@ -32,8 +29,7 @@ export class StepRenderer {
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
     this.gl.toneMapping = THREE.ACESFilmicToneMapping; this.gl.toneMappingExposure = 1.05;
     this.gl.setClearColor(0xffffff, 0);
-    const ys = m.pieces.flatMap(p => [p.y, p.y + p.h]);
-    this.scale = ((Math.max(...ys) - Math.min(...ys)) * PL) / 42;
+    this.scale = makeTimeline(m).size / 42;
     const s = this.scale;
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.4));
     const sun = new THREE.DirectionalLight(0xffffff, 2.4);
@@ -53,28 +49,19 @@ export class StepRenderer {
     m.pieces.forEach((p, i) => { const k = geoKey(p) + '|' + p.c; byKey.set(k, [...(byKey.get(k) ?? []), i]); });
     const white = new THREE.Color('#ffffff');
     for (const ids of byKey.values()) {
-      const p0 = m.pieces[ids[0]], col = COLOR_BY_ID.get(p0.c)!;
+      const p0 = m.pieces[ids[0]];
       const mk = (pale: boolean) => {
         const c = new THREE.Color(renderHex(p0.c));
         if (pale) c.lerp(white, 0.4);
-        const mat = col.trans ? new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.05, transparent: true, opacity: 0.7 })
-          : new THREE.MeshStandardMaterial({ color: c, roughness: pale ? 0.6 : 0.32 });
+        const mat = new THREE.MeshStandardMaterial({ color: c, roughness: pale ? 0.6 : 0.32 });
         const mesh = new THREE.InstancedMesh(pieceGeometry(p0), mat, ids.length);
-        mesh.castShadow = !col.trans; mesh.receiveShadow = true; mesh.frustumCulled = false;
+        mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
         this.scene.add(mesh);
         return { mesh, ids };
       };
       this.full.push(mk(false)); this.pale.push(mk(true));
     }
     this.scene.add(this.edges);
-    this.plateIdx = m.pieces.findIndex(p => p.nameplate);
-    if (this.plateIdx >= 0 && label) {
-      const p = m.pieces[this.plateIdx];
-      this.plate = new THREE.Mesh(new THREE.PlaneGeometry(p.w - 0.15, p.d - 0.15), new THREE.MeshStandardMaterial({ map: nameplateTexture(label, p.w, p.d, renderHex(p.c)), roughness: 0.3 }));
-      this.plate.rotation.x = -Math.PI / 2;
-      this.plate.position.copy(this.home[this.plateIdx]); this.plate.position.y += p.h * PL + 0.003;
-      this.scene.add(this.plate);
-    }
     m.steps.forEach((s2, si) => s2.forEach(i => { this.step[i] = si; }));
   }
 
@@ -85,7 +72,6 @@ export class StepRenderer {
       b.ids.forEach((i, j) => b.mesh.setMatrixAt(j, state(i) === want ? m4.makeTranslation(this.home[i].x, this.home[i].y, this.home[i].z) : zero));
       b.mesh.instanceMatrix.needsUpdate = true;
     }
-    if (this.plate) this.plate.visible = state(this.plateIdx) !== 0;
   }
 
   private outline(ids: number[]) {
