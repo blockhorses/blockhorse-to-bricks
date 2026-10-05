@@ -1,7 +1,6 @@
 // Video of the build animation (square or 9:16) with synced brick clicks.
 // Recorded in real time with MediaRecorder: MP4 when the browser can, else WebM.
 import type { Model } from '../core/build';
-import type { PunkGrid } from '../core/detect';
 import { easeIO } from '../viewer/timeline';
 import { SKY, Viewer } from '../viewer/scene';
 import { drawPages, PAGE_SIZE } from './pdf';
@@ -18,7 +17,7 @@ export function videoMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
   return null;
 }
 
-export interface VideoOptions { format: VideoFormat; label: string; small?: boolean; onProgress?: (stage: 'pages' | 'recording', f: number) => void }
+export interface VideoOptions { format: VideoFormat; small?: boolean; onProgress?: (stage: 'pages' | 'recording', f: number) => void }
 
 /** The booklet in the video: a 3D book whose pages turn slowly on a few pages, then riffle and land on the
  *  finished model. Right-hand pages (shown after each turn) and the backs of the leaves, in order. */
@@ -42,9 +41,9 @@ function bookPlan(steps: number) {
   return { order, turns, length: turns[turns.length - 1][0] + turns[turns.length - 1][1] + HOLD };
 }
 
-async function bookPages(m: Model, grid: PunkGrid, label: string, width: number, order: number[], onProgress: (f: number) => void): Promise<HTMLCanvasElement[]> {
+async function bookPages(m: Model, width: number, order: number[], onProgress: (f: number) => void): Promise<HTMLCanvasElement[]> {
   const got = new Map<number, HTMLCanvasElement>(), want = new Set(order);
-  await drawPages(m, grid, { label, renderSize: width < 900 ? 700 : 1000 }, (pg, n) => {
+  await drawPages(m, { renderSize: width < 900 ? 700 : 1000 }, (pg, n) => {
     const c = document.createElement('canvas'); c.width = width; c.height = Math.round((width * PAGE_SIZE[1]) / PAGE_SIZE[0]);
     c.getContext('2d')!.drawImage(pg, 0, 0, c.width, c.height);
     got.set(n, c); onProgress(got.size / want.size);
@@ -52,24 +51,24 @@ async function bookPages(m: Model, grid: PunkGrid, label: string, width: number,
   return order.map(n => got.get(n)!);
 }
 
-export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Promise<{ blob: Blob; ext: string }> {
+export async function recordVideo(m: Model, o: VideoOptions): Promise<{ blob: Blob; ext: string }> {
   const kind = videoMime();
   if (!kind) throw new Error('This browser can’t record video. Try Chrome, Edge, Firefox or Safari 14.1+.');
   const k = o.small ? 2 / 3 : 1;
   const W = Math.round(1080 * k), H = Math.round((o.format === 'story' ? 1920 : 1080) * k);
   // 3D frames off-screen, composed with titles on a 2D canvas that is recorded
   const glCanvas = document.createElement('canvas');
-  const v = new Viewer(glCanvas, { fixedSize: [W, H], lowPoly: o.small, label: o.label });
+  const v = new Viewer(glCanvas, { fixedSize: [W, H], lowPoly: o.small });
   v.setModel(m);
   const tl = v.tl!;
   const plan = bookPlan(m.steps.length);
-  const pages = await bookPages(m, grid, o.label, o.small ? 1100 : 1600, plan.order, f => o.onProgress?.('pages', f));
+  const pages = await bookPages(m, o.small ? 1100 : 1600, plan.order, f => o.onProgress?.('pages', f));
   const book = new Book(pages, PAGE_SIZE[1] / PAGE_SIZE[0], W / H, plan.turns);
   const tBook = tl.end, duration = tBook + plan.length;
   const out = document.createElement('canvas'); out.width = W; out.height = H;
   const x = out.getContext('2d')!;
-  const title = o.label ? `Punk ${o.label}` : 'My CryptoPunk';
-  const sub = `${m.checks.pieces.toLocaleString('en')} pieces · ${m.size === 'xl' ? 'XL' : 'Mini'} brick bust`;
+  const title = `BlockHorse #${m.horse.token}`;
+  const sub = `${m.horse.name} · ${m.checks.pieces.toLocaleString('en')} pieces`;
 
   const drawModel = (t: number) => {
     v.pose(Math.min(t, tl.end)); v.setBuildCamera(Math.min(t, tl.end)); v.render();
@@ -79,7 +78,7 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
   const frame = (t: number) => {
     x.fillStyle = `#${SKY.getHexString()}`; x.fillRect(0, 0, W, H);
     if (t < tBook) drawModel(t);
-    else if (t < tBook + 0.6) {   // cross-fade from the bust to the booklet
+    else if (t < tBook + 0.6) {   // cross-fade from the model to the booklet
       drawModel(t);
       x.globalAlpha = easeIO((t - tBook) / 0.6); x.drawImage(drawBook(t - tBook), 0, 0, W, H); x.globalAlpha = 1;
     } else x.drawImage(drawBook(t - tBook), 0, 0, W, H);
@@ -87,12 +86,12 @@ export async function recordVideo(m: Model, grid: PunkGrid, o: VideoOptions): Pr
     if (o.format === 'story') {
       x.font = `800 ${Math.round(72 * k)}px ${FONT}`; x.fillText(title, W / 2, 150 * k);
       x.font = `500 ${Math.round(40 * k)}px ${FONT}`; x.fillText(sub, W / 2, 215 * k);
-      x.font = `600 ${Math.round(34 * k)}px ${FONT}`; x.globalAlpha = 0.75; x.fillText('Punk to Bricks', W / 2, H - 110 * k); x.globalAlpha = 1;
+      x.font = `600 ${Math.round(34 * k)}px ${FONT}`; x.globalAlpha = 0.75; x.fillText('BlockHorse to Bricks', W / 2, H - 110 * k); x.globalAlpha = 1;
     } else {
       x.textAlign = 'left';
       x.font = `800 ${Math.round(44 * k)}px ${FONT}`; x.fillText(title, 44 * k, 76 * k);
       x.font = `500 ${Math.round(28 * k)}px ${FONT}`; x.fillText(sub, 44 * k, 118 * k);
-      x.font = `600 ${Math.round(24 * k)}px ${FONT}`; x.globalAlpha = 0.7; x.fillText('Punk to Bricks', 44 * k, H - 40 * k); x.globalAlpha = 1;
+      x.font = `600 ${Math.round(24 * k)}px ${FONT}`; x.globalAlpha = 0.7; x.fillText('BlockHorse to Bricks', 44 * k, H - 40 * k); x.globalAlpha = 1;
     }
   };
 

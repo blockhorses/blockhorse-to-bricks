@@ -3,92 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Punk to Bricks</title>
-  <meta name="description" content="Turn your CryptoPunk into a brick bust you can really build: 3D build animation, PDF instructions and a BrickLink parts list. Free, and your image never leaves your browser.">
+  <title>BlockHorse to Bricks</title>
+  <meta name="description" content="Turn any of the 260 BlockHorses into a brick model you can really build: 3D build animation, PDF instructions, and LEGO Pick a Brick and BrickLink parts lists. Free, and it runs in your browser.">
   <meta name="theme-color" content="#B4DBF1">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Punk to Bricks">
-  <meta property="og:description" content="Turn your CryptoPunk into a brick bust you can really build: 3D build animation, PDF instructions and a BrickLink parts list. Free, and your image never leaves your browser.">
-  <meta property="og:image" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/og.png">
-  <meta property="og:url" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/">
+  <meta property="og:title" content="BlockHorse to Bricks">
+  <meta property="og:description" content="Turn any of the 260 BlockHorses into a brick model you can really build: 3D build animation, PDF instructions, and LEGO Pick a Brick and BrickLink parts lists. Free, and it runs in your browser.">
+  <meta property="og:image" content="https://blockhorses.github.io/blockhorse-to-bricks/og.png">
+  <meta property="og:url" content="https://blockhorses.github.io/blockhorse-to-bricks/">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Punk to Bricks">
-  <meta name="twitter:description" content="Turn your CryptoPunk into a brick bust you can really build.">
-  <meta name="twitter:image" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/og.png">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23B4DBF1'/%3E%3Crect x='3' y='6' width='10' height='7' fill='%23AA7D55'/%3E%3Crect x='4' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3Crect x='9' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3C/svg%3E">
+  <meta name="twitter:title" content="BlockHorse to Bricks">
+  <meta name="twitter:description" content="Turn your BlockHorse into a brick model you can really build.">
+  <meta name="twitter:image" content="https://blockhorses.github.io/blockhorse-to-bricks/og.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23B4DBF1'/%3E%3Crect x='3' y='6' width='8' height='4' fill='%23800080'/%3E%3Crect x='10' y='3' width='3' height='4' fill='%23800080'/%3E%3Crect x='3' y='10' width='2' height='3' fill='%23800080'/%3E%3Crect x='8' y='10' width='2' height='3' fill='%23800080'/%3E%3Crect x='1' y='6' width='2' height='3' fill='%23FFD700'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="./">Punk to Bricks</a>
+    <a class="brand" href="./">BlockHorse to Bricks</a>
     <span class="tag">Free · runs in your browser</span>
   </header>
 
   <main>
     <section class="hero">
-      <h1>Turn your Punk into a brick bust you can really build</h1>
-      <p class="lede">Type your Punk number or drop its image. You get a 3D build animation, step-by-step instructions and your parts list, ready to order.</p>
+      <h1>Turn your BlockHorse into a brick model you can really build</h1>
+      <p class="lede">Pick any of the 260 BlockHorses. You get a 3D build animation, step-by-step instructions and your parts list, ready to order. One sprite pixel is one stud wide and one brick tall.</p>
     </section>
 
     <section class="panel" id="input-panel">
-      <div class="choose">
-        <form class="by-number" id="by-number" autocomplete="off" novalidate>
-          <label for="punk-number" class="drop-title">Type your Punk #</label>
-          <div class="num-row">
-            <span class="hash" aria-hidden="true">#</span>
-            <input id="punk-number" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="1234" aria-describedby="num-help">
-            <button class="go" type="submit">Build</button>
+      <div class="picker">
+        <div class="sprite" id="sprite" role="img" aria-label="The original BlockHorse sprite"></div>
+        <div class="pick-side">
+          <div>
+            <p class="horse-name" id="horse-name">BlockHorse</p>
+            <p class="horse-species" id="horse-species"></p>
           </div>
-          <span class="drop-sub" id="num-help">Any Punk from 0 to 9999.</span>
-        </form>
-        <span class="or" aria-hidden="true">or</span>
-        <label class="drop" id="drop" tabindex="0">
-          <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-          <span class="drop-title">Drop your image</span>
-          <span class="drop-sub"><u>Choose an image</u> or paste it. PNG or JPG, any size, screenshots work.</span>
-        </label>
+          <form class="by-number" id="by-number" autocomplete="off" novalidate>
+            <button type="button" class="step-btn" id="prev" aria-label="Previous BlockHorse">‹</button>
+            <label class="num-row" for="token"><span class="hash" aria-hidden="true">#</span><input id="token" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-label="BlockHorse number, 1 to 260"></label>
+            <button type="button" class="step-btn" id="next" aria-label="Next BlockHorse">›</button>
+            <button class="go" type="submit">Build</button>
+            <button type="button" class="step-btn" id="random">Random</button>
+          </form>
+          <div class="examples">
+            <span>One of each:</span>
+            <div id="examples" class="example-row"></div>
+          </div>
+        </div>
       </div>
-      <p class="privacy"><strong>Nothing leaves your browser.</strong> Your number or image is used on your device only: no upload, no server, no AI.</p>
-      <div class="examples">
-        <span>No Punk at hand? Try one:</span>
-        <div id="examples" class="example-row"></div>
-      </div>
+      <p class="privacy"><strong>Nothing leaves your browser.</strong> The model, the instructions and the video are made on your device: no upload, no server, no AI.</p>
       <p class="error" id="error" role="alert" hidden></p>
     </section>
 
     <nav class="secnav" id="secnav" hidden aria-label="Sections">
-      <a href="#sec-bust" data-sec="sec-bust"><i>1</i>Your bust</a>
+      <a href="#sec-horse" data-sec="sec-horse"><i>1</i>Your horse</a>
       <a href="#sec-manual" data-sec="sec-manual"><i>2</i>Instructions</a>
       <a href="#sec-buy" data-sec="sec-buy"><i>3</i>Buy the bricks</a>
     </nav>
 
     <div class="result" id="result" hidden>
-      <section class="sec" id="sec-bust">
-        <div class="sec-hd"><span class="num">1</span><div><h2>Your bust</h2><p id="bust-sub">Built and checked in your browser</p></div></div>
+      <section class="sec" id="sec-horse">
+        <div class="sec-hd"><span class="num">1</span><div><h2>Your horse</h2><p id="horse-sub">Built and checked in your browser</p></div></div>
         <div class="toolbar">
-          <div class="sizes" role="radiogroup" aria-label="Size">
-            <button class="size" data-size="mini" role="radio">Mini <small>1 pixel = 1 stud</small></button>
-            <button class="size" data-size="xl" role="radio">XL <small>1 pixel = 2×2 studs</small></button>
-          </div>
-          <label class="plate">Punk #<input id="punkno" inputmode="numeric" maxlength="5" placeholder="optional" autocomplete="off"></label>
+          <div class="bases" role="radiogroup" aria-label="Base colour" id="bases"><span>Base</span></div>
           <div class="actions">
             <button id="replay" class="ghost">Replay</button>
             <button id="skip" class="ghost">Skip</button>
           </div>
         </div>
         <div class="stage">
-          <canvas id="view" aria-label="3D view of the brick bust"></canvas>
+          <canvas id="view" aria-label="3D view of the brick model"></canvas>
           <div class="busy" id="busy" hidden><span class="spinner"></span><span id="busy-text">Building…</span></div>
           <p class="hint" id="hint" hidden>Drag to turn · pinch or scroll to zoom</p>
         </div>
         <div class="stats" id="stats"></div>
+        <ul class="traits" id="traits" aria-label="Trait colours: original and brick"></ul>
         <details class="more" id="more">
           <summary><span class="pill" id="pill"></span><span class="status-short" id="status-short"></span><span class="more-link">More info</span></summary>
           <div class="more-body">
-            <div class="read">
-              <canvas id="grid" width="96" height="96" aria-label="The Punk as we read it"></canvas>
-              <div><strong>What we read</strong><br><span id="read-text"></span></div>
-            </div>
             <ul class="checks" id="checks"></ul>
             <ul class="notes" id="notes"></ul>
           </div>
@@ -127,7 +119,7 @@
         <div class="ctas">
           <div class="cta">
             <button class="ctab lego" id="buy-lego"><span class="logo" aria-hidden="true">🧱</span><span><b>Buy at LEGO</b><small>Pick a Brick · official shop</small></span><span class="n"><b id="lego-n"></b><span id="lego-total"></span></span></button>
-            <label class="swline" id="lego-option"><input type="checkbox" id="prefer-lego" role="switch"><span class="sw" aria-hidden="true"></span><span id="prefer-text">Get every lot at LEGO: use only parts LEGO sells</span></label>
+            <label class="swline" id="lego-option"><input type="checkbox" id="prefer-lego" role="switch"><span class="sw" aria-hidden="true"></span><span id="prefer-text">Only colours LEGO sells</span></label>
           </div>
           <div class="cta">
             <button class="ctab bl" id="buy-bl"><span class="logo" aria-hidden="true">🛒</span><span><b>Buy on BrickLink</b><small id="bl-sub">Independent shops · the rest</small></span><span class="n"><b id="bl-n"></b><span id="bl-total"></span></span></button>
@@ -162,18 +154,19 @@
 
     <section class="faq">
       <h2>Questions</h2>
-      <details><summary>Is my image uploaded anywhere?</summary><p>No. Everything happens in your browser: reading the image, designing the model, the 3D view, the PDF and the video. There is no server and no AI behind this site, and nothing about your Punk is stored or sent.</p></details>
-      <details><summary>Can I really build it?</summary><p>Every model is checked by computer: all pieces are standard parts in real colours, every piece is attached to the base (0 floating), no two pieces overlap (0 collisions) and the centre of mass sits over the base. The site shows these checks for your model and says so plainly if one fails. Models have not been built with real bricks yet, so treat your first build as a test. A few colours can be hard to find in large plates.</p></details>
-      <details><summary>How do I get the bricks?</summary><p>Under “Order the bricks”: download the Pick a Brick file and upload it on LEGO Pick a Brick (“Upload List”), and/or download the BrickLink list and upload it on BrickLink (Want → Upload). The site tells you how many lots LEGO sells, and “Prefer parts available at LEGO” rebuilds your model with those parts only. You order and pay on those sites, never here.</p></details>
-      <details><summary>What are the clear pieces?</summary><p>Some Punks have details that touch nothing, like cigarette smoke. They are held up by small clear bricks, and the site tells you when it adds them.</p></details>
-      <details><summary>Is this official?</summary><p>No. Punk to Bricks is a free, open-source, unofficial fan project, not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. It sells nothing and earns nothing: no affiliate links, no commission, no tracking.</p></details>
+      <details><summary>How is the sprite turned into bricks?</summary><p>One pixel of the 32 × 32 sprite is one stud wide and one brick tall, on a 32 × 8 base of two crossed plate layers. The model is 6 studs deep: the legs come in two pairs, the body is full depth, the head 4 studs, the tail and mane 2 studs, and each wing is one stud thick on the outside. The front of the model, the side facing you in the instructions, is the side the sprite shows. Every horse of a species (horse, pegasus, unicorn, winged unicorn) has the same build; only the colours change.</p></details>
+      <details><summary>Where do the colours come from?</summary><p>Each trait (coat, mane, tail, eyes, shoes, horn, wings) is a CSS colour name in the token’s original SVG. It is matched to the nearest real brick colour with CIEDE2000, and traits that touch keep different brick colours when their original colours differ. “Only colours LEGO sells” picks, per trait, the nearest colour LEGO Pick a Brick sells in every part that trait uses. The model itself never changes.</p></details>
+      <details><summary>Can I really build it?</summary><p>Every model is checked by computer: all pieces are standard parts in real colours, every piece is attached to the base (0 floating), no two pieces overlap (0 collisions) and the centre of mass sits over the base. No piece larger than 1 × 1 hangs on a single stud. A 1 × 1 brick always sits on one stud, so the steps of a unicorn’s horn are held by one stud each, by design. Models have not been built with real bricks yet, so treat your first build as a test.</p></details>
+      <details><summary>What is the jumper plate?</summary><p>A 1 × 2 plate with a single stud in the middle (BrickLink part 15573). The horn sits on one so that it’s centred on the head, half a stud off the grid.</p></details>
+      <details><summary>How do I get the bricks?</summary><p>Under “Buy the bricks”: download the Pick a Brick file and upload it on LEGO Pick a Brick (“Upload List”), and/or copy the BrickLink list and upload it on BrickLink (Want → Upload). The site tells you how many lots LEGO sells. You order and pay on those sites, never here.</p></details>
+      <details><summary>Is this official?</summary><p>No. BlockHorse to Bricks is a free, open-source, unofficial fan project, not affiliated with, sponsored or endorsed by the LEGO Group or BrickLink. It sells nothing and earns nothing: no affiliate links, no commission, no tracking. It is based on <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks" target="_blank" rel="noopener">Punk to Bricks</a> by John Karp. BlockHorses are at <a href="https://github.com/blockhorses/BlockHorses" target="_blank" rel="noopener">blockhorses/BlockHorses</a>.</p></details>
     </section>
   </main>
 
   <footer class="foot">
-    <p>Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: <a href="https://rebrickable.com" target="_blank" rel="noopener">Rebrickable</a>. No purchases, payments or personal data go through this site.</p>
-    <p>Models are computer-checked, not physically build-tested. <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks/blob/main/DISCLAIMER.md" target="_blank" rel="noopener">Disclaimer</a> · <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks" target="_blank" rel="noopener">Source code (MIT)</a></p>
-    <p class="credit">Made by John Karp · NFT Morning · Inspired by <a href="https://x.com/victormustar" target="_blank" rel="noopener">@victormustar</a>'s Microduck</p>
+    <p>Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group or BrickLink. LEGO® is a trademark of the LEGO Group. Parts data: <a href="https://rebrickable.com" target="_blank" rel="noopener">Rebrickable</a>. No purchases, payments or personal data go through this site.</p>
+    <p>Models are computer-checked, not physically build-tested. <a href="https://github.com/blockhorses/blockhorse-to-bricks/blob/main/DISCLAIMER.md" target="_blank" rel="noopener">Disclaimer</a> · <a href="https://github.com/blockhorses/blockhorse-to-bricks" target="_blank" rel="noopener">Source code (MIT)</a> · <a href="https://github.com/blockhorses/BlockHorses" target="_blank" rel="noopener">BlockHorses</a></p>
+    <p class="credit">Based on <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks" target="_blank" rel="noopener">Punk to Bricks</a> by John Karp, inspired by <a href="https://x.com/victormustar" target="_blank" rel="noopener">@victormustar</a>'s Microduck</p>
   </footer>
   <dialog id="before-order" aria-labelledby="bo-title">
     <form method="dialog">

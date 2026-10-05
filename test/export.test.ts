@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { buildModel } from '../src/core/build';
-import { detectPunk } from '../src/core/detect';
-import { REFERENCE_PUNK } from './fixtures/punks';
 import { brickLinkXML, partsCSV } from '../src/export/parts';
-import { punkImage } from './img';
 
-const m = buildModel(detectPunk(punkImage(REFERENCE_PUNK, 8)), 'xl');
+const m = buildModel(6);
 
 describe('parts exports', () => {
   it('CSV lists every lot and adds up to the piece count', () => {
@@ -14,6 +11,7 @@ describe('parts exports', () => {
     const lots = lines.slice(1).filter(l => /^\d+,\d/.test(l));
     expect(lots.length).toBe(m.bom.length);
     expect(lots.reduce((a, l) => a + +l.split(',')[0], 0)).toBe(m.checks.pieces);
+    expect(lines.some(l => l.includes(',15573,'))).toBe(true);
   });
   it('BrickLink XML has one ITEM per lot with valid fields', () => {
     const x = brickLinkXML(m);
@@ -22,7 +20,7 @@ describe('parts exports', () => {
     const items = [...x.matchAll(/<ITEM><ITEMTYPE>P<\/ITEMTYPE><ITEMID>(\w+)<\/ITEMID><COLOR>(\d+)<\/COLOR><MINQTY>(\d+)<\/MINQTY><CONDITION>X<\/CONDITION><\/ITEM>/g)];
     expect(items.length).toBe(m.bom.length);
     expect(items.reduce((a, i) => a + +i[3], 0)).toBe(m.checks.pieces);
-    // part/colour pairs are unique
     expect(new Set(items.map(i => i[1] + '/' + i[2])).size).toBe(items.length);
+    expect(items.some(i => i[1] === '15573')).toBe(true);
   });
 });

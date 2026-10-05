@@ -57,14 +57,7 @@ export function makeSoundtrack(m: Model, tl: Timeline, duration: number, book?: 
   for (const { t, p } of lands) {
     if (t - last < 0.05 + rnd() * 0.03) continue;
     last = t;
-    add(click(p.w * p.d, rnd), t, (0.45 + rnd() * 0.45) * (p.kind === 'tile' ? 0.7 : 1));
-  }
-  // headwear lands on the head: a heavy clack
-  if (tl.hasTop) {
-    const tc = tl.capDown[1], len = Math.round(0.25 * SR), thud = new Float32Array(len), nz = bandNoise(len, 300, 5000, rnd);
-    for (let i = 0; i < len; i++) { const t = i / SR; thud[i] = Math.sin(2 * Math.PI * 140 * t) * Math.exp(-t * 28) + 0.5 * Math.sin(2 * Math.PI * 310 * t) * Math.exp(-t * 40) + 0.6 * nz[i] * Math.exp(-t * 60); }
-    add(thud, tc - 0.01, 1.3);
-    for (let k = 0; k < 7; k++) add(click(4, rnd), tc + 0.004 * k + rnd() * 0.03, 0.8);
+    add(click(p.w * p.d, rnd), t, (0.45 + rnd() * 0.45) * (p.kind === 'brick' ? 1 : 0.8));
   }
   // whoosh into the booklet, then each page: a swish and a soft slap as it lands
   if (book) {
