@@ -79,7 +79,7 @@ describe('every species builds solid', () => {
       let proto = 0;
       for (const a of ps) for (const b of ps) if (a.y + a.h === b.y) proto += ov(a, b);
       expect(m.checks.connections).toBe(proto);
-      expect(m.pieces.length).toBe({ horse: 174, pegasus: 206, unicorn: 179, winged: 212 }[h.species]);
+      expect(m.pieces.length).toBe({ horse: 174, pegasus: 205, unicorn: 180, winged: 211 }[h.species]);
       // every piece is in exactly one step
       expect(m.steps.flat().sort((a, b) => a - b)).toEqual(m.pieces.map((_, i) => i));
     });
