@@ -5,7 +5,7 @@ import { buildWithSeed, searchBuild, SPECIES } from '../scripts/build-horses';
 import builds from '../src/data/builds.json';
 
 const golden = (s: string) => JSON.parse(readFileSync(`blockhorse-reference/builds/${s}.json`, 'utf8'));
-const SEEDS = { horse: 323, pegasus: 323, unicorn: 323, winged: 323 };
+const SEEDS = { horse: 323, pegasus: 2775, unicorn: 323, winged: 2775 };
 
 describe('build-horses port', () => {
   for (const s of SPECIES) {

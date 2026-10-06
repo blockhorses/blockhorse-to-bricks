@@ -38,9 +38,10 @@ function sprite(species) {
   return px;
 }
 // z ranges for a pixel; returns list of [z, role]
-// The neck rises out of the body at row 14 and across the front of rows 15 and 16 (x >= 19).
+// The neck rises out of the body at row 14, across the front of row 15 (x >= 19) and row 16 (x >= 20),
+// so the shoulder steps in with 2 studs showing on row 17 and 1 on row 16.
 // The SVG groups those pixels with the body, but they are built at neck (head) depth.
-const isNeck = (part, r, x) => part === 'core' && (r === 14 || (r >= 15 && r <= 16 && x >= 19));
+const isNeck = (part, r, x) => part === 'core' && (r === 14 || (r === 15 && x >= 19) || (r === 16 && x >= 20));
 function depth(p, r, x) {
   const all = (a, b, r) => { const o = []; for (let z = a; z <= b; z++) o.push([z, r]); return o; };
   const { role } = p, part = isNeck(p.part, r, x) ? 'head' : p.part;

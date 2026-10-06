@@ -33,9 +33,9 @@ This repo is `blockhorses/blockhorse-to-bricks`, a fork of `hs7j4yk4sz-boop/punk
 - Every horse of a species uses that species' build. Only the colours change per token.
 - The port must reproduce the golden builds piece for piece with the same seeds:
   - horse 323
-  - pegasus 323
+  - pegasus 2775
   - unicorn 323
-  - winged 323
+  - winged 2775
 - Add a test that compares the port's output to the golden files.
 - Drop the Mini/XL sizes. There is one size.
 - Drop the curved slope part. These builds use only bricks, plates and the jumper.

@@ -40,7 +40,7 @@ The model is 6 studs deep, at z = 1..6 on the base.
 |---|---|
 | Legs and shoes | Two pairs: front z 1–2 and back z 5–6 |
 | Body core | Full depth, z 1–6 |
-| Neck (core pixels on row 14, and rows 15–16 from x = 19) | 4 deep, z 2–5, same as the head |
+| Neck (core pixels on row 14, row 15 from x = 19, row 16 from x = 20) | 4 deep, z 2–5, same as the head |
 | Head | 4 deep, z 2–5 |
 | Ears | z 2 and z 5 |
 | Tail, mane-only pixels | 2 deep, z 3–4 |
@@ -77,10 +77,10 @@ The model is 6 studs deep, at z = 1..6 on the base.
 
 | Species | Pieces | Bricks tall incl. base | Seed |
 |---|---|---|---|
-| Horse | 178 | 24 rows, 23.7 cm | 323 |
-| Pegasus | 204 | 29 rows, 28.5 cm | 323 |
-| Unicorn | 184 | 26 rows, 25.6 cm | 323 |
-| Winged Unicorn | 210 | 29 rows, 28.5 cm | 323 |
+| Horse | 173 | 24 rows, 23.7 cm | 323 |
+| Pegasus | 208 | 29 rows, 28.5 cm | 2775 |
+| Unicorn | 179 | 26 rows, 25.6 cm | 323 |
+| Winged Unicorn | 214 | 29 rows, 28.5 cm | 2775 |
 
 Every build is 25.6 cm long (32 studs) and 6.4 cm deep (8 studs).
 
