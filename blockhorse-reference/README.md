@@ -40,12 +40,12 @@ The model is 6 studs deep, at z = 1..6 on the base.
 |---|---|
 | Legs and shoes | Two pairs: front z 1–2 and back z 5–6 |
 | Body core | Full depth, z 1–6 |
-| Neck (core pixels on row 14, row 15 from x = 19, row 16 from x = 20) | 4 deep, z 2–5, same as the head |
+| Neck (core pixels on row 14, row 15 from x = 20, row 16 from x = 21) | 4 deep, z 2–5, same as the head |
 | Head | 4 deep, z 2–5 |
 | Ears | z 2 and z 5 |
 | Tail, mane-only pixels | 2 deep, z 3–4 |
 
-- The SVG groups the base of the neck with the body (`core`). Built at body depth, the neck only narrowed at row 13 and the shoulders looked boxy, so those pixels are built at neck depth.
+- The SVG groups the base of the neck with the body (`core`). Built at body depth, the neck only narrowed at row 13 and the shoulders looked boxy, so those pixels are built at neck depth. The shoulder steps into the neck one stud per row, so one stud shows on each side of rows 17, 16 and 15.
 
 - The mane fills z 3–4 between the ears on the lower ear row (sprite y = 9).
 - Nothing goes between the ear tips (y = 8). The ear tips stand alone.
@@ -77,10 +77,10 @@ The model is 6 studs deep, at z = 1..6 on the base.
 
 | Species | Pieces | Bricks tall incl. base | Seed |
 |---|---|---|---|
-| Horse | 173 | 24 rows, 23.7 cm | 323 |
-| Pegasus | 208 | 29 rows, 28.5 cm | 2775 |
-| Unicorn | 179 | 26 rows, 25.6 cm | 323 |
-| Winged Unicorn | 214 | 29 rows, 28.5 cm | 2775 |
+| Horse | 177 | 24 rows, 23.7 cm | 323 |
+| Pegasus | 207 | 29 rows, 28.5 cm | 323 |
+| Unicorn | 183 | 26 rows, 25.6 cm | 323 |
+| Winged Unicorn | 213 | 29 rows, 28.5 cm | 323 |
 
 Every build is 25.6 cm long (32 studs) and 6.4 cm deep (8 studs).
 

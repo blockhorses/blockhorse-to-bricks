@@ -31,10 +31,10 @@ Turn any of the 260 [BlockHorses](https://github.com/blockhorses/BlockHorses) in
 
 | Species | Horses | Pieces | Height incl. base | Seed |
 |---|---|---|---|---|
-| Horse | 227 | 173 | 23.7 cm | 323 |
-| Pegasus | 11 | 208 | 28.5 cm | 2775 |
-| Unicorn | 15 | 179 | 25.6 cm | 323 |
-| Winged Unicorn | 7 | 214 | 28.5 cm | 2775 |
+| Horse | 227 | 177 | 23.7 cm | 323 |
+| Pegasus | 11 | 207 | 28.5 cm | 323 |
+| Unicorn | 15 | 183 | 25.6 cm | 323 |
+| Winged Unicorn | 7 | 213 | 28.5 cm | 323 |
 
 ## What's inside
 
