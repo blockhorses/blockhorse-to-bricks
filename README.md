@@ -25,16 +25,16 @@ Turn any of the 260 [BlockHorses](https://github.com/blockhorses/BlockHorses) in
 ## The build
 
 - **Scale.** One sprite pixel is one stud wide and one brick (3 plates) tall, so the model is 20% taller than the sprite. Every build is 32 × 8 studs (25.6 × 6.4 cm) on a base of two crossed plate layers.
-- **Depth.** The model is 6 studs deep. The legs and shoes come in two pairs (front and back), the body is full depth, the neck rises out of the shoulder 4 studs deep like the head, the ears stand at each side with the mane between them, the tail and mane crest are 2 studs, and each wing is one stud thick on the outer face.
+- **Depth.** The body is 6 studs deep; wings stand out to the full 8-stud depth of the base. The legs and shoes come in two pairs (front and back), the body is full depth, the neck rises out of the shoulder 4 studs deep like the head, the ears stand at each side with the mane between them, the tail and mane crest are 2 studs, and each wing is one stud thick, standing one stud out from the side of the body.
 - **Horn.** A unicorn's horn is one stud thick and centred on the head, half a stud off the grid: it starts on a **1 × 2 jumper plate** (BrickLink 15573, one centre stud), two 1 × 2 plates finish that brick row, and 1-stud-wide bricks step up and forward. Each step is held by a single stud, by design.
 - **Four builds.** Every horse of a species uses the same build; only the colours change. The builds are made offline by `scripts/build-horses.ts`, which searches 3,000 random tilings per species and keeps the best (one connected group, no weak joints, the fewest seams and pieces). They are in `src/data/builds.json`.
 
 | Species | Horses | Pieces | Height incl. base | Seed |
 |---|---|---|---|---|
 | Horse | 227 | 177 | 23.7 cm | 323 |
-| Pegasus | 11 | 207 | 28.5 cm | 323 |
+| Pegasus | 11 | 201 | 28.5 cm | 1150 |
 | Unicorn | 15 | 183 | 25.6 cm | 323 |
-| Winged Unicorn | 7 | 213 | 28.5 cm | 323 |
+| Winged Unicorn | 7 | 210 | 28.5 cm | 1686 |
 
 ## What's inside
 

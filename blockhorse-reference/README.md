@@ -34,7 +34,7 @@ This folder records the build agreed during design. It is input for porting, not
 - Top layer: 2 × 8 plates running front to back.
 
 **Depth**
-The model is 6 studs deep, at z = 1..6 on the base.
+The body is 6 studs deep, at z = 1..6 on the base. Wings stand out to z = 0 and z = 7, the edges of the base.
 
 | Part | Depth |
 |---|---|
@@ -51,8 +51,8 @@ The model is 6 studs deep, at z = 1..6 on the base.
 - Nothing goes between the ear tips (y = 8). The ear tips stand alone.
 
 **Wings**
-- One stud thick, one wing on each outer face (z 1 and z 6).
-- Where a wing pixel overlaps the body core, the core keeps z 2–5.
+- One stud thick, standing one stud out from each side of the body (z 0 and z 7, in line with the edges of the base), so they read as wings rather than blending into the body.
+- Where a wing pixel overlaps the body core, the wing is 2 deep (z 0–1 and z 6–7, taking the body's outer stud) so it sits on the body; the core keeps z 2–5.
 
 **Horn**
 - One stud thick and centred on the head (z = 3.5, a half-stud offset), placed by hand:
@@ -78,9 +78,9 @@ The model is 6 studs deep, at z = 1..6 on the base.
 | Species | Pieces | Bricks tall incl. base | Seed |
 |---|---|---|---|
 | Horse | 177 | 24 rows, 23.7 cm | 323 |
-| Pegasus | 207 | 29 rows, 28.5 cm | 323 |
+| Pegasus | 201 | 29 rows, 28.5 cm | 1150 |
 | Unicorn | 183 | 26 rows, 25.6 cm | 323 |
-| Winged Unicorn | 213 | 29 rows, 28.5 cm | 323 |
+| Winged Unicorn | 210 | 29 rows, 28.5 cm | 1686 |
 
 Every build is 25.6 cm long (32 studs) and 6.4 cm deep (8 studs).
 
