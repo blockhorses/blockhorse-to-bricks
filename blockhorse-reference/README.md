@@ -4,7 +4,7 @@ This folder records the build agreed during design. It is input for porting, not
 
 | File | What it is |
 |---|---|
-| `build-blockhorse.js` | Prototype builder (plain Node, no dependencies). Turns the sprite into a brick model and searches seeds for the best tiling. |
+| `build-blockhorse.cjs` | Prototype builder (plain Node, no dependencies). Turns the sprite into a brick model and searches seeds for the best tiling. |
 | `builds/*.json` | The agreed builds, one per species. Output of the builder with 3000 seeds. Treat these as golden fixtures. |
 | `horses.json` | Trait colours for tokens 1 to 260, parsed from `blockhorses/BlockHorses` `api/horse/<n>.svg`, plus the hex value of every CSS colour name used. |
 | `prototype.html` | Working single-page prototype: token picker, 3D viewer, layer instructions, parts list, Pick a Brick CSV and BrickLink XML. Use it for behaviour and colour-mapping logic, not for code structure. |
@@ -40,9 +40,12 @@ The model is 6 studs deep, at z = 1..6 on the base.
 |---|---|
 | Legs and shoes | Two pairs: front z 1–2 and back z 5–6 |
 | Body core | Full depth, z 1–6 |
+| Neck (core pixels on row 14, and row 15 from x = 19) | 4 deep, z 2–5, same as the head |
 | Head | 4 deep, z 2–5 |
 | Ears | z 2 and z 5 |
 | Tail, mane-only pixels | 2 deep, z 3–4 |
+
+- The SVG groups the base of the neck with the body (`core`). Built at body depth, the neck only narrowed at row 13 and the shoulders looked boxy, so those pixels are built at neck depth.
 
 - The mane fills z 3–4 between the ears on the lower ear row (sprite y = 9).
 - Nothing goes between the ear tips (y = 8). The ear tips stand alone.
@@ -74,10 +77,10 @@ The model is 6 studs deep, at z = 1..6 on the base.
 
 | Species | Pieces | Bricks tall incl. base | Seed |
 |---|---|---|---|
-| Horse | 174 | 24 rows, 23.7 cm | 1201 |
-| Pegasus | 206 | 29 rows, 28.5 cm | 1150 |
-| Unicorn | 179 | 26 rows, 25.6 cm | 2241 |
-| Winged Unicorn | 212 | 29 rows, 28.5 cm | 1150 |
+| Horse | 174 | 24 rows, 23.7 cm | 323 |
+| Pegasus | 205 | 29 rows, 28.5 cm | 2775 |
+| Unicorn | 180 | 26 rows, 25.6 cm | 323 |
+| Winged Unicorn | 211 | 29 rows, 28.5 cm | 2775 |
 
 Every build is 25.6 cm long (32 studs) and 6.4 cm deep (8 studs).
 

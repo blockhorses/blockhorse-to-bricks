@@ -3,7 +3,7 @@ This repo is `blockhorses/blockhorse-to-bricks`, a fork of `hs7j4yk4sz-boop/punk
 ## Read first
 
 - `blockhorse-reference/README.md`: the agreed build. Every design decision is in there, so follow it rather than redesigning.
-- `blockhorse-reference/build-blockhorse.js`: prototype builder in plain JS.
+- `blockhorse-reference/build-blockhorse.cjs`: prototype builder in plain JS.
 - `blockhorse-reference/builds/*.json`: the agreed builds. These are golden fixtures.
 - `blockhorse-reference/horses.json`: trait colours for tokens 1 to 260.
 - `blockhorse-reference/prototype.html`: a working prototype of the whole flow. Use it for behaviour and the colour logic.
@@ -32,10 +32,10 @@ This repo is `blockhorses/blockhorse-to-bricks`, a fork of `hs7j4yk4sz-boop/punk
 - This follows the same pattern as `scripts/build-elements.ts`: the seed search runs offline, and the site loads fixed builds.
 - Every horse of a species uses that species' build. Only the colours change per token.
 - The port must reproduce the golden builds piece for piece with the same seeds:
-  - horse 1201
-  - pegasus 1150
-  - unicorn 2241
-  - winged 1150
+  - horse 323
+  - pegasus 2775
+  - unicorn 323
+  - winged 2775
 - Add a test that compares the port's output to the golden files.
 - Drop the Mini/XL sizes. There is one size.
 - Drop the curved slope part. These builds use only bricks, plates and the jumper.
