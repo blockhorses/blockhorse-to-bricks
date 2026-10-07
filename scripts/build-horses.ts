@@ -40,16 +40,19 @@ function sprite(species: Species) {
   if (hasWings(species)) { over(cellsOf(GEO.W), 'W'); over(FILL.W, 'W'); }
   return px;
 }
-/** The neck rises out of the body at row 14 and across the front of row 15 (x >= 19).
+/** The neck rises out of the body at row 14, across the front of row 15 (x >= 20) and row 16 (x >= 21),
+ *  so the shoulder steps into the neck with 1 stud showing on each of rows 17, 16 and 15.
  *  The SVG groups those pixels with the body, but they are built at neck (head) depth. */
-const isNeck = (part: string, r: number, x: number) => part === 'core' && (r === 14 || (r === 15 && x >= 19));
+const isNeck = (part: string, r: number, x: number) => part === 'core' && (r === 14 || (r === 15 && x >= 20) || (r === 16 && x >= 21));
 /** depth cells of a pixel (before the base offset): [z, role] */
 function depth(p: Px, r: number, x: number): [number, Role][] {
   const all = (a: number, b: number, role: Role) => { const o: [number, Role][] = []; for (let z = a; z <= b; z++) o.push([z, role]); return o; };
   const { role } = p, part = isNeck(p.part, r, x) ? 'head' : p.part;
   if (role === 'W') {
-    if (part === 'core') return [[0, 'W'], ...all(1, 4, 'C'), [5, 'W']];
-    return [[0, 'W'], [5, 'W']];
+    // wings stand one stud out from the body, in line with the edges of the base;
+    // where they cross the body they are 2 deep (taking the body's outer stud) so they sit on it
+    if (part === 'core') return [[-1, 'W'], [0, 'W'], ...all(1, 4, 'C'), [5, 'W'], [6, 'W']];
+    return [[-1, 'W'], [6, 'W']];
   }
   if (role === 'U') return [[2, 'U']];
   switch (part) {

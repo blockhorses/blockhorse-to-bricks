@@ -34,25 +34,25 @@ This folder records the build agreed during design. It is input for porting, not
 - Top layer: 2 × 8 plates running front to back.
 
 **Depth**
-The model is 6 studs deep, at z = 1..6 on the base.
+The body is 6 studs deep, at z = 1..6 on the base. Wings stand out to z = 0 and z = 7, the edges of the base.
 
 | Part | Depth |
 |---|---|
 | Legs and shoes | Two pairs: front z 1–2 and back z 5–6 |
 | Body core | Full depth, z 1–6 |
-| Neck (core pixels on row 14, and row 15 from x = 19) | 4 deep, z 2–5, same as the head |
+| Neck (core pixels on row 14, row 15 from x = 20, row 16 from x = 21) | 4 deep, z 2–5, same as the head |
 | Head | 4 deep, z 2–5 |
 | Ears | z 2 and z 5 |
 | Tail, mane-only pixels | 2 deep, z 3–4 |
 
-- The SVG groups the base of the neck with the body (`core`). Built at body depth, the neck only narrowed at row 13 and the shoulders looked boxy, so those pixels are built at neck depth.
+- The SVG groups the base of the neck with the body (`core`). Built at body depth, the neck only narrowed at row 13 and the shoulders looked boxy, so those pixels are built at neck depth. The shoulder steps into the neck one stud per row, so one stud shows on each side of rows 17, 16 and 15.
 
 - The mane fills z 3–4 between the ears on the lower ear row (sprite y = 9).
 - Nothing goes between the ear tips (y = 8). The ear tips stand alone.
 
 **Wings**
-- One stud thick, one wing on each outer face (z 1 and z 6).
-- Where a wing pixel overlaps the body core, the core keeps z 2–5.
+- One stud thick, standing one stud out from each side of the body (z 0 and z 7, in line with the edges of the base), so they read as wings rather than blending into the body.
+- Where a wing pixel overlaps the body core, the wing is 2 deep (z 0–1 and z 6–7, taking the body's outer stud) so it sits on the body; the core keeps z 2–5.
 
 **Horn**
 - One stud thick and centred on the head (z = 3.5, a half-stud offset), placed by hand:
@@ -77,10 +77,10 @@ The model is 6 studs deep, at z = 1..6 on the base.
 
 | Species | Pieces | Bricks tall incl. base | Seed |
 |---|---|---|---|
-| Horse | 174 | 24 rows, 23.7 cm | 323 |
-| Pegasus | 205 | 29 rows, 28.5 cm | 2775 |
-| Unicorn | 180 | 26 rows, 25.6 cm | 323 |
-| Winged Unicorn | 211 | 29 rows, 28.5 cm | 2775 |
+| Horse | 177 | 24 rows, 23.7 cm | 323 |
+| Pegasus | 201 | 29 rows, 28.5 cm | 1150 |
+| Unicorn | 183 | 26 rows, 25.6 cm | 323 |
+| Winged Unicorn | 210 | 29 rows, 28.5 cm | 1686 |
 
 Every build is 25.6 cm long (32 studs) and 6.4 cm deep (8 studs).
 
